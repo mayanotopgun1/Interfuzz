@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>Code Structure Diagram</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- 可选：想用完全自动布局时启用 ELK（graph.meta.layout.mode = 'elk'） -->
+  <script src="https://cdn.jsdelivr.net/npm/elkjs/lib/elk.bundled.js"></script>
+  <style>
+    body{margin:0;padding:16px;font-family:Arial,sans-serif;background:#fff}
+    svg{width:100%;height:85vh;border:1px solid #eee}
+    .container-box{fill:#f9f9f9;stroke:#000;stroke-width:2}
+    .class-row{fill:#e0f7fa;stroke:#000;stroke-width:1}
+    .method-row{fill:#fff;stroke:#000;stroke-width:1}
+    .text-label{font-size:14px;font-weight:bold;text-anchor:start;pointer-events:none}
+    .interface-text{font-size:14px;font-style:italic;font-weight:bold;text-anchor:start;pointer-events:none}
+    .method-text{font-size:12px;font-style:italic;text-anchor:start;pointer-events:none}
+    .link{stroke:#000;stroke-width:1.5;fill:none}
+    .link.dashed{stroke-dasharray:6 4}
+    .link.dotted{stroke-dasharray:2 2}
+    .link-label-text{font-size:10px;fill:#333;text-anchor:middle;pointer-events:none}
+  </style>
+</head>
+<body>
+  <svg id="stage"></svg>
+
+  <script>
+    const svg = d3.select('#stage');
+    const gRoot = svg.append('g');
+    svg.call(d3.zoom().scaleExtent([0.5, 2]).on('zoom', (e)=> gRoot.attr('transform', e.transform)));
+
+    // 箭头
+    const defs = svg.append('defs');
+    defs.append('marker')
+      .attr('id','arrow')
+      .attr('viewBox','0 -5 10 10')
+      .attr('refX',8).attr('refY',0)
+      .attr('markerWidth',6).attr('markerHeight',6)
+      .attr('orient','auto')
+      .append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#000');
+
+    // --- 工具函数 ---
+    function computeNodeSize(node, defaults){
+      const rows = node.rows || [];
+      const rowH = defaults.rowHeight || 30;
+      const height = Math.max(rowH * rows.length, rowH);
+      const width  = node.width || defaults.width || 180;
+      const padding = defaults.padding || 8;
+      return { width, height, rowH, padding };
+    }
+    function rowCenterY(idx, rowH){ return idx * rowH + rowH/2; }
+
+    // grid 布局：根据 layer 与 order 摆放，复刻原图
+    function layoutGrid(data){
+      const cfg = {
+        colGap: data.meta?.layout?.colGap ?? 150,
+        rowGap: data.meta?.layout?.rowGap ?? 140,
+        topPad: 40, leftPad: 40
+      };
+      const defaults = data.meta?.nodeDefaults || {};
+      const nodes = data.nodes.map(n=>{
+        const sz = computeNodeSize(n, defaults);
+        return { id:n.id, _raw:n, ...sz };
+      });
+
+      // 分层+排序
+      const byLayer = d3.group(nodes, d => d._raw.layer ?? 0);
+      const laid = [];
+      byLayer.forEach((arr, layer)=>{
+        arr.sort((a,b)=>(a._raw.order??0)-(b._raw.order??0));
+        laid.push({ layer: +layer, nodes: arr });
+      });
+      laid.sort((a,b)=>a.layer-b.layer);
+
+      // 摆放
+      let maxHByRow = new Map(); // rowIndex -> max height
+      laid.forEach((col, colIdx)=>{
+        col.nodes.forEach((n, rowIdx)=>{
+          const x = cfg.leftPad + colIdx * ( (data.meta?.nodeDefaults?.width ?? 180) + cfg.colGap );
+          // 计算该行累计 y（使同一“rowIndex”行上下对齐）
+          const prevMax = maxHByRow.get(rowIdx) ?? 0;
+          const y = cfg.topPad + rowIdx * cfg.rowGap + prevMax;
+          n.x = x; n.y = y;
+        });
+      });
+
+      // 输出布局对象
+      return { nodes, cfg };
+    }
+
+    // elk 布局：可在以后切换（不保证 100% 还原原图视觉）
+    async function layoutElk(data){
+      const elk = new ELK();
+      const defaults = data.meta?.nodeDefaults || {};
+      const children = data.nodes.map(n=>{
+        const sz = computeNodeSize(n, defaults);
+        return { id:n.id, width:sz.width, height:sz.height, _raw:n, _size:sz };
+      });
+      const elkGraph = {
+        id:'root',
+        layoutOptions:{
+          'elk.algorithm': 'layered',
+          'elk.direction': data.meta?.layout?.direction || 'RIGHT',
+          'elk.edgeRouting': 'ORTHOGONAL',
+          'elk.spacing.componentComponent': String(data.meta?.layout?.spacing ?? 40),
+          'elk.layered.spacing.nodeNodeBetweenLayers': String(data.meta?.layout?.spacing ?? 40),
+          'elk.layered.considerModelOrder': 'true'
+        },
+        children,
+        edges: data.edges.map(e=>({ id:e.id, sources:[e.source], targets:[e.target], _raw:e }))
+      };
+      const laid = await elk.layout(elkGraph);
+      // 标准化为 grid 返回结构
+      const nodes = laid.children.map(c=>({
+        id:c.id, x:c.x, y:c.y, width:c.width, height:c.height, rowH:(children.find(n=>n.id===c.id)._size.rowH),
+        _raw: children.find(n=>n.id===c.id)._raw
+      }));
+      return { nodes, cfg:{ leftPad:0, topPad:0, colGap:0, rowGap:0 } };
+    }
+
+    // 端口吸附：把边挂到“类名行/方法行”的中心线
+    function pickPort(node, role){
+      const rows = node._raw.rows || [];
+      const idx = role === 'methodRow'
+        ? Math.min(1, rows.length-1)       // 简化：方法行取第2行；若只有1行就取0
+        : 0;                               // classRow / interfaceRow 都按第1行
+      return { y: node.y + rowCenterY(idx, node.rowH) };
+    }
+
+    // 画图
+    function draw(data, layout){
+      const defaults = data.meta?.nodeDefaults || {};
+      const g = gRoot.append('g');
+
+      // 节点
+      const nodeG = g.selectAll('.node')
+        .data(layout.nodes)
+        .enter().append('g')
+        .attr('class','node')
+        .attr('transform', d=>`translate(${d.x},${d.y})`);
+
+      nodeG.append('rect')
+        .attr('class','container-box')
+        .attr('width', d=>d.width || (defaults.width||180))
+        .attr('height', d=>d.height || (d.rowH*(d._raw.rows?.length||1)));
+
+      nodeG.each(function(d){
+        const rows = d._raw.rows||[];
+        rows.forEach((row, i)=>{
+          d3.select(this).append('rect')
+            .attr('x',0).attr('y', i*d.rowH)
+            .attr('width', d.width).attr('height', d.rowH)
+            .attr('class', row.type === 'method' ? 'method-row' : 'class-row');
+          const cls =
+            row.type==='method' ? 'method-text' :
+            row.type==='interface' ? 'interface-text' : 'text-label';
+          d3.select(this).append('text')
+            .attr('x',8).attr('y', i*d.rowH + d.rowH/2 + 4)
+            .attr('class', cls).text(row.text);
+        });
+      });
+
+      // 边
+      const edgeG = g.selectAll('.edge')
+        .data(data.edges)
+        .enter().append('g')
+        .attr('class','edge');
+
+      edgeG.append('path')
+        .attr('class', d=>{
+          const t = ['link'];
+          const style = d.style?.line;
+          if(style==='dashed') t.push('dashed');
+          if(style==='dotted') t.push('dotted');
+          return t.join(' ');
+        })
+        .attr('marker-end', d => d.style?.marker==='arrow' ? 'url(#arrow)' : null)
+        .attr('d', d => {
+          const src = layout.nodes.find(n=>n.id===d.source);
+          const tgt = layout.nodes.find(n=>n.id===d.target);
+          if(!src || !tgt) return '';
+          // 端口
+          const srcPort = pickPort(src, d.attach?.source || (d.semantics==='call' ? 'methodRow' : 'classRow'));
+          const tgtPort = pickPort(tgt, d.attach?.target || (d.semantics==='call' ? 'methodRow' : 'classRow'));
+          // 出入侧（从右出、从左入）
+          const p0 = { x: src.x + src.width, y: srcPort.y };
+          const p3 = { x: tgt.x,             y: tgtPort.y };
+
+          // 为了还原你原图的“C0 延长段”，对 instantiate/call 做不同的水平延伸
+          const extend = (d.semantics==='instantiate') ? (data.meta?.layout?.c0ExtendLong ?? 130)
+                        : (d.semantics==='call')        ? (data.meta?.layout?.c0ExtendShort ?? 100)
+                        : 60;
+
+          const midX = p0.x + extend;
+          const pts = [
+            p0,
+            {x:midX, y:p0.y},
+            {x:midX, y:p3.y},
+            p3
+          ];
+          return d3.line().x(p=>p.x).y(p=>p.y)(pts);
+        });
+
+      // 标签：按固定距离从出发点沿折线路径计算位置，确保所有边的文字到出发点距离一致
+      edgeG.each(function(d){
+        if(!d.label) return;
+
+        // 复用与 path 相同的端点/延伸逻辑，保证 label 距离和 path 一致
+        const src = layout.nodes.find(n=>n.id===d.source);
+        const tgt = layout.nodes.find(n=>n.id===d.target);
+        if(!src || !tgt) return;
+
+        const srcPort = pickPort(src, d.attach?.source || (d.semantics==='call' ? 'methodRow' : 'classRow'));
+        const tgtPort = pickPort(tgt, d.attach?.target || (d.semantics==='call' ? 'methodRow' : 'classRow'));
+        const p0 = { x: src.x + src.width, y: srcPort.y };
+        const p3 = { x: tgt.x,             y: tgtPort.y };
+
+        const extend = (d.semantics==='instantiate') ? (data.meta?.layout?.c0ExtendLong ?? 130)
+                      : (d.semantics==='call')        ? (data.meta?.layout?.c0ExtendShort ?? 100)
+                      : 60;
+        const midX = p0.x + extend;
+
+        // 固定距离（px）从出发点计算位置（优先使用边上配置，其次全局配置，默认 120px）
+        const fixedDist = (d.labelDistanceFromSource ?? data.meta?.layout?.labelDistanceFromSource ?? 30);
+
+        // 分段长度：水平延伸段、垂直段、右侧水平段
+        const seg1 = extend;
+        const seg2 = Math.abs(p3.y - p0.y);
+        const seg3 = Math.max(0, p3.x - midX);
+        const totalLen = seg1 + seg2 + seg3;
+
+        // 如果边比期望短，退回到接近终点的位置
+        const dist = Math.min(fixedDist, Math.max(0, totalLen - 1e-3));
+
+        // 计算 label 在折线上的坐标（按段处理）
+        let lx, ly;
+        if(dist <= seg1){
+          // 第一段：水平从 p0 向右
+          lx = p0.x + dist;
+          ly = p0.y;
+        } else if(dist <= seg1 + seg2){
+          // 第二段：在 midX 上垂直移动
+          const dd = dist - seg1;
+          const dir = p3.y >= p0.y ? 1 : -1;
+          lx = midX;
+          ly = p0.y + dir * dd;
+        } else {
+          // 第三段：从 midX 向右到 p3.x
+          const dd = dist - seg1 - seg2;
+          const ratio = seg3 === 0 ? 0 : (dd / seg3);
+          lx = midX + ratio * (p3.x - midX);
+          ly = p3.y;
+        }
+
+        // 语义 Y 方向微偏移（保持原有风格）
+        let dy = 0;
+        if (d.semantics==='instantiate') dy = -(d.labelOffsetY ?? 15);
+        else if (d.semantics==='call')   dy =  (d.labelOffsetY ?? 10);
+        else if (d.semantics==='implement' && d.source==='c1') dy = -12;
+        else if (d.semantics==='implement' && d.source==='c2') dy = 12;
+
+        String(d.label).split('\n').forEach((line,i)=>{
+          d3.select(this).append('text')
+            .attr('x', lx)
+            .attr('y', ly + dy + i*12)
+            .attr('class','link-label-text')
+            .attr('text-anchor','middle')
+            .text(line);
+        });
+      });
+
+      // 自适应
+      const bbox = g.node().getBBox();
+      const pad = 40;
+      svg.attr('viewBox', `${bbox.x-pad} ${bbox.y-pad} ${bbox.width+pad*2} ${bbox.height+pad*2}`);
+      document.title = data.meta?.title || 'Graph';
+    }
+
+    // 主流程
+    (async function init(){
+      const res = await fetch('graph.json');
+      const data = await res.json();
+
+      const mode = data.meta?.layout?.mode || 'grid'; // 'grid' | 'elk'
+      let layout;
+      if (mode === 'elk') layout = await layoutElk(data);
+      else layout = layoutGrid(data);
+
+      draw(data, layout);
+    })();
+  </script>
+</body>
+</html>

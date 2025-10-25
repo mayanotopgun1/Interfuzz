@@ -1,0 +1,24 @@
+[
+  {
+    "id": "R8-420228751",
+    "compiler": "R8",
+    "type": "Semantic Error",
+    "title": "接口继承下的错误方法分派（I1/I2/foo）",
+    "gist": "应输出 I1.foo/I2.foo，实际均为 I2.foo",
+    "rootCause": "类合并时对接口继承关系分析有误，错误地判定方法等价",
+    "snippet": "interface I1{default void foo(){/*...*/}}\ninterface I2 extends I1{default void foo(){/*...*/}}\nclass C1 implements I1{}\nclass C2 implements I2{}\n...",
+    "impact": "在大规模工程中引发运行期行为偏差",
+    "ref": "paper"
+  },
+  {
+    "id": "HotSpot-8357782",
+    "compiler": "HotSpot",
+    "type": "Semantic Error",
+    "title": "静态初始化与构造次序分析失误",
+    "gist": "JIT 对跨类静态字段写读次序推断错误导致异常",
+    "rootCause": "优化器错误假设 str 仍为 null",
+    "snippet": "class C1{static String str; void foo(){ new C2(str);} } ...",
+    "impact": "触发异常/错误优化",
+    "ref": "paper"
+  }
+]

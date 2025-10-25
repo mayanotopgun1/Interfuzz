@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "title": "Code Structure Diagram (Mut)",
+    "layout": {
+      "mode": "grid",
+      "colGap": 170,
+      "rowGap": 160,
+      "c0ExtendLong": 130,
+      "c0ExtendShort": 100,
+      "labelDistanceFromSource": 120
+    },
+    "nodeDefaults": { "width": 180, "rowHeight": 30, "padding": 8 }
+  },
+  "nodes": [
+    { "id": "c0", "layer": 0, "order": 1, "rows": [ { "type": "class", "text": "Class C0" }, { "type": "method", "text": "void main(String[])" } ] },
+    { "id": "c1", "layer": 1, "order": 0, "rows": [ { "type": "class", "text": "Class C1" }, { "type": "method", "text": "void foo()" }, { "type": "method", "text": "void bar()" } ] },
+    { "id": "c2", "layer": 1, "order": 2, "rows": [ { "type": "class", "text": "Class C2" }, { "type": "method", "text": "void foo()" } ] },
+    { "id": "i1", "layer": 2, "order": 0, "rows": [ { "type": "interface", "text": "Interface I1" }, { "type": "method", "text": "default void foo()" } ] },
+    { "id": "i2", "layer": 2, "order": 2, "rows": [ { "type": "interface", "text": "Interface I2" }, { "type": "method", "text": "default void foo()" } ] },
+    { "id": "i3", "layer": 2, "order": 1, "rows": [ { "type": "interface", "text": "Interface I3" } ] }
+  ],
+  "edges": [
+    { "id": "e_c0_c1_new", "source": "c0", "target": "c1", "style": { "line": "solid", "marker": "arrow" }, "label": "Reference\nObject Instantiation", "semantics": "instantiate", "attach": { "source": "classRow", "target": "classRow" } },
+    { "id": "e_c0_c2_new", "source": "c0", "target": "c2", "style": { "line": "solid", "marker": "arrow" }, "label": "Reference\nObject Instantiation", "semantics": "instantiate", "attach": { "source": "classRow", "target": "classRow" } },
+    { "id": "e_c0_c1_call", "source": "c0", "target": "c1", "style": { "line": "dotted", "marker": "arrow" }, "label": "Reference\nMethod Invocation", "semantics": "call", "attach": { "source": "methodRow", "target": "methodRow" } },
+    { "id": "e_c0_c2_call", "source": "c0", "target": "c2", "style": { "line": "dotted", "marker": "arrow" }, "label": "Reference\nMethod Invocation", "semantics": "call", "attach": { "source": "methodRow", "target": "methodRow" } },
+    { "id": "e_c1_i1_impl", "source": "c1", "target": "i1", "style": { "line": "dashed", "marker": "arrow" }, "label": "Interface Implement", "semantics": "implement" },
+    { "id": "e_c2_i2_impl", "source": "c2", "target": "i2", "style": { "line": "dashed", "marker": "arrow" }, "label": "Interface Implement", "semantics": "implement" },
+    { "id": "e_i2_i1_ext", "source": "i2", "target": "i1", "style": { "line": "solid", "marker": "arrow" }, "label": "Inheritance", "semantics": "extend", "targetSide": "east" },
+    { "id": "e_i3_i1_ext", "source": "i3", "target": "i1", "style": { "line": "solid", "marker": "arrow" }, "label": "Inheritance", "semantics": "extend" },
+    { "id": "e_c1_c2_call", "source": "c1", "target": "c2", "style": { "line": "dotted", "marker": "arrow" }, "label": "Method Invocation", "semantics": "call", "attach": { "source": "methodRow", "target": "methodRow" } }
+  ]
+}
