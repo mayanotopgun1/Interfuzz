@@ -9,7 +9,7 @@
       "c0ExtendShort": 100,
       "labelDistanceFromSource": 80
     },
-    "nodeDefaults": { "width": 180, "rowHeight": 30, "padding": 8 }
+  "nodeDefaults": { "width": 180, "rowHeight": 30, "padding": 8 }
   },
   "nodes": [
     {
@@ -24,7 +24,7 @@
     {
       "id": "c1",
       "layer": 1,
-      "order": 0,
+      "order": 1,
       "rows": [
         { "type": "class", "text": "Class C1" },
         { "type": "method", "text": "void foo()" }
@@ -37,6 +37,17 @@
       "rows": [
         { "type": "class", "text": "Class C2" },
         { "type": "method", "text": "void foo()" }
+      ]
+    },
+    {
+      "id": "c3",
+      "layer": 1,
+      "order": 1,
+      "rows": [
+        { "type": "class", "text": "Class C3" },
+        { "type": "method", "text": "int calc()" },
+        { "type": "method", "text": "String name()" },
+        { "type": "method", "text": "void run()" }
       ]
     },
     {
@@ -65,8 +76,7 @@
       "target": "c1",
       "style": { "line": "solid", "marker": "arrow" },
       "label": "Reference\nObject Instantiation",
-      "semantics": "instantiate",
-      "attach": { "source": "classRow", "target": "classRow" }
+      "attach": { "sourceRow": 1, "targetRow": 1 }
     },
     {
       "id": "e_c0_c2_new",
@@ -74,8 +84,7 @@
       "target": "c2",
       "style": { "line": "solid", "marker": "arrow" },
       "label": "Reference\nObject Instantiation",
-      "semantics": "instantiate",
-      "attach": { "source": "classRow", "target": "classRow" }
+      "attach": { "sourceRow": 1, "targetRow": 1 }
     },
     {
       "id": "e_c0_c1_call",
@@ -83,8 +92,7 @@
       "target": "c1",
       "style": { "line": "dotted", "marker": "arrow" },
       "label": "Reference\nMethod Invocation",
-      "semantics": "call",
-      "attach": { "source": "methodRow", "target": "methodRow" }
+      "attach": { "sourceRow": 2, "targetRow": 2 }
     },
     {
       "id": "e_c0_c2_call",
@@ -92,8 +100,7 @@
       "target": "c2",
       "style": { "line": "dotted", "marker": "arrow" },
       "label": "Reference\nMethod Invocation",
-      "semantics": "call",
-      "attach": { "source": "methodRow", "target": "methodRow" }
+      "attach": { "sourceRow": 2, "targetRow": 2 }
     },
     {
       "id": "e_c1_i1_impl",
@@ -101,7 +108,7 @@
       "target": "i1",
       "style": { "line": "dashed", "marker": "arrow" },
       "label": "Interface Implement",
-      "semantics": "implement"
+      "attach": { "sourceRow": 1, "targetRow": 1 }
     },
     {
       "id": "e_c2_i2_impl",
@@ -109,7 +116,31 @@
       "target": "i2",
       "style": { "line": "dashed", "marker": "arrow" },
       "label": "Interface Implement",
-      "semantics": "implement"
+      "attach": { "sourceRow": 1, "targetRow": 1 }
+    },
+    {
+      "id": "e_c3_c1_impl",
+      "source": "c3",
+      "target": "c1",
+      "style": { "line": "dashed", "marker": "arrow" },
+      "label": "Interface Implement",
+      "attach": { "sourceRow": 1, "targetRow": 1 }
+    },
+    {
+      "id": "e_c1_c3_impl",
+      "source": "c1",
+      "target": "c3",
+      "style": { "line": "dashed", "marker": "arrow" },
+      "label": "Interface Implement",
+      "attach": { "sourceRow": 1, "targetRow": 3 }
+    },
+    {
+      "id": "e_row_based",
+      "source": "c3",
+      "target": "c2",
+      "style": { "line": "dashed", "marker": "arrow" },
+      "label": "Interface Implement",
+      "attach": { "sourceRow": 1, "targetRow": 2 }
     },
     {
       "id": "e_i2_i1_ext",
@@ -117,7 +148,6 @@
       "target": "i1",
       "style": { "line": "solid", "marker": "arrow" },
       "label": "Inheritance",
-      "semantics": "extend",
       "targetSide": "east"
     }
   ]

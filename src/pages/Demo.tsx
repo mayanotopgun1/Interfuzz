@@ -1,24 +1,84 @@
 import { useEffect, useRef, useState } from 'react'
 import GraphPanel from '../components/GraphPanel'
-import { Upload, Wand2, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Trash2, PlayCircle, CheckCircle2, Loader2, Copy, Info, FileCode, ChevronRight } from 'lucide-react'
+import { PIPELINE_CORE_STEPS, PIPELINE_CONNECTORS, PIPELINE_PROGRESS_SEQUENCE, PIPELINE_DESCRIPTION, PIPELINE_NOTE, MUTATED_CODE_HEADER, MUTATION_EXPLANATION, MUTATED_CODE_SNIPPET, HEADER_TITLE, HEADER_SUBTITLE } from '../data/terminology'
+import PipelineFlow from '../components/PipelineFlow'
 
 export default function Demo() {
   const [leftDataUrl, setLeftDataUrl] = useState<string | null>(null)
   const [rightDataUrl, setRightDataUrl] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [mutating, setMutating] = useState(false)
+  // 移除上传/变异后台调用，仅保留本地文件读取预览
   const [error, setError] = useState<string | null>(null)
   const blobUrls = useRef<string[]>([])
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  // manual JSON input states
-  const [seedText, setSeedText] = useState<string>('')
-  const [seedPretty, setSeedPretty] = useState<string>('')
-  const [mutText, setMutText] = useState<string>('')
-  const [mutPretty, setMutPretty] = useState<string>('')
+  const [selectedFileContent, setSelectedFileContent] = useState<string>('')
+  const [manualOpen, setManualOpen] = useState<boolean>(false)
+  const [manualJavaText, setManualJavaText] = useState<string>('')
   const [leftSource, setLeftSource] = useState<string>('')
   const [rightSource, setRightSource] = useState<string>('')
-  const [seedOpen, setSeedOpen] = useState<boolean>(true)
-  const [mutOpen, setMutOpen] = useState<boolean>(true)
+
+  // ---- 自动流程演示相关状态 ----
+  const progressSteps = PIPELINE_PROGRESS_SEQUENCE
+  const [analysisRunning, setAnalysisRunning] = useState(false)
+  const [analysisDone, setAnalysisDone] = useState(false)
+  const [currentStep, setCurrentStep] = useState<number>(-1)
+  const [mutatedCode, setMutatedCode] = useState<string>('')
+  const totalSteps = progressSteps.length
+  const progress = currentStep < 0 ? 0 : Math.min(100, Math.round(((currentStep + (analysisDone ? 1 : 0)) / totalSteps) * 100))
+
+  // 模拟步骤执行
+  async function startAutoDemo() {
+    if (analysisRunning) return
+    const hasManual = manualJavaText.trim().length > 0
+    const seedName = selectedFile?.name || (hasManual ? 'Manual.java' : '')
+    if (!selectedFile && !hasManual) {
+      setError('请先选择一个 Java Seed 文件或手动输入 Java 源码')
+      return
+    }
+    // reset
+    setAnalysisDone(false)
+    setCurrentStep(-1)
+    setMutatedCode('')
+    setLeftDataUrl(null)
+    setRightDataUrl(null)
+    setLeftSource('')
+    setRightSource('')
+    setError(null)
+    setAnalysisRunning(true)
+
+    const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+    for (let i = 0; i < progressSteps.length; i++) {
+      setCurrentStep(i)
+      // 针对具体阶段做出可见效果
+      if (progressSteps[i].includes('初始 HPG')) {
+        setLeftDataUrl('/graphs/seed.json')
+        const seedFileBase = seedName || 'Seed.java'
+        setLeftSource(seedFileBase)
+      }
+      if (progressSteps[i].includes('变异后 HPG')) {
+        setRightDataUrl('/graphs/mut.json')
+        const seedFileBase = seedName || 'Seed.java'
+        setRightSource(`${seedFileBase.replace(/\.java$/,'')}-after.json`)
+      }
+      if (progressSteps[i].includes('测试程序生成')) {
+        if (selectedFile || hasManual) {
+          const seedBase = (seedName || 'Calculator.java')
+          setMutatedCode(MUTATED_CODE_HEADER + MUTATION_EXPLANATION + MUTATED_CODE_SNIPPET(seedBase))
+        } else {
+          setMutatedCode('')
+        }
+      }
+      // 不同阶段不同停顿模拟耗时
+      await delay( i === 0 ? 800 : i === progressSteps.length - 1 ? 600 : 900 )
+    }
+    setAnalysisRunning(false)
+    setAnalysisDone(true)
+  }
+
+  function copyMutated() {
+    if (!mutatedCode) return
+    navigator.clipboard.writeText(mutatedCode).catch(()=>{})
+  }
 
   // 初始两个图都为空
 
@@ -33,290 +93,192 @@ export default function Demo() {
   const effectiveLeftUrl = leftDataUrl ?? undefined
   const effectiveRightUrl = rightDataUrl ?? undefined
 
-  async function handleUpload() {
-    setError(null)
-    if (!selectedFile) {
-      setError('请先选择一个 .java 文件再上传')
-      return
+  // 读取本地选取的 Java Seed 文件内容用于预览（不上传）
+  function onSelectLocalJava(file: File | null) {
+    setSelectedFile(file)
+    setSelectedFileContent('')
+    // 切换到文件时清空手动输入
+    if (file) {
+      setManualJavaText('')
+      setManualOpen(false)
     }
-    setUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', selectedFile)
-
-      // Placeholder endpoint: POST /api/upload-seed
-      // Expected responses (frontend is tolerant):
-      // 1) { seedJsonUrl: '/graphs/seed-generated.json' }
-      // 2) raw graph JSON (object with nodes/edges)
-      // 3) { graph: { ... } }
-      const res = await fetch('/api/upload-seed', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error(`upload failed: ${res.status}`)
-      const json = await res.json().catch(() => null)
-      if (json && typeof json === 'object') {
-        if (typeof json.seedJsonUrl === 'string') {
-          setLeftDataUrl(json.seedJsonUrl)
-          setLeftSource('上传')
-        } else if (json.graph) {
-          const blob = new Blob([JSON.stringify(json.graph)], { type: 'application/json' })
-          const url = URL.createObjectURL(blob)
-          blobUrls.current.push(url)
-          setLeftDataUrl(url)
-          setLeftSource('上传')
-        } else if (json.nodes && json.edges) {
-          // assume it's graph JSON directly
-          const blob = new Blob([JSON.stringify(json)], { type: 'application/json' })
-          const url = URL.createObjectURL(blob)
-          blobUrls.current.push(url)
-          setLeftDataUrl(url)
-          setLeftSource('上传')
-        } else {
-          // unexpected shape; treat as error
-          throw new Error('上传返回的数据格式不可识别')
-        }
-      } else {
-        throw new Error('上传未返回 JSON 数据')
-      }
-  // uploaded seed loaded; 双图模式固定，无需切换
-    } catch (err: any) {
-      setError(err?.message ?? String(err))
-    } finally {
-      setUploading(false)
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = String(reader.result || '')
+      setSelectedFileContent(text)
     }
+    reader.readAsText(file)
   }
 
-  async function handleMutate() {
-    setError(null)
-    setMutating(true)
-    try {
-      // Placeholder endpoint: POST /api/trigger-mut
-      // We pass the seed URL (if available) so backend can locate the seed
-      const body = JSON.stringify({ seedUrl: leftDataUrl ?? undefined })
-      const res = await fetch('/api/trigger-mut', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
-      if (!res.ok) throw new Error(`mutate failed: ${res.status}`)
-      const json = await res.json().catch(() => null)
-      if (json && typeof json === 'object') {
-        if (typeof json.mutJsonUrl === 'string') {
-          setRightDataUrl(json.mutJsonUrl)
-          setRightSource('变异')
-        } else if (json.graph) {
-          const blob = new Blob([JSON.stringify(json.graph)], { type: 'application/json' })
-          const url = URL.createObjectURL(blob)
-          blobUrls.current.push(url)
-          setRightDataUrl(url)
-          setRightSource('变异')
-        } else if (json.nodes && json.edges) {
-          const blob = new Blob([JSON.stringify(json)], { type: 'application/json' })
-          const url = URL.createObjectURL(blob)
-          blobUrls.current.push(url)
-          setRightDataUrl(url)
-          setRightSource('变异')
-        } else {
-          throw new Error('变异返回的数据格式不可识别')
-        }
-      } else {
-        throw new Error('变异未返回 JSON 数据')
-      }
-  // 变异结果已加载
-    } catch (err: any) {
-      setError(err?.message ?? String(err))
-    } finally {
-      setMutating(false)
-    }
-  }
-
-  function setBlobForSide(side: 'left' | 'right', obj: unknown) {
-    try {
-      const blob = new Blob([JSON.stringify(obj)], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      blobUrls.current.push(url)
-      if (side === 'left') setLeftDataUrl(url)
-      else setRightDataUrl(url)
-    } catch (e) {
-      setError('对象转为 JSON 失败')
-    }
-  }
-
-  function loadSeedFromText() {
-    setError(null)
-    try {
-      const obj = JSON.parse(seedText)
-  setSeedPretty(JSON.stringify(obj, null, 2))
-  setBlobForSide('left', obj)
-      setLeftSource('手动')
-    } catch (e: any) {
-      setError('seed JSON 解析失败：' + (e?.message ?? String(e)))
-    }
-  }
-
-  function loadMutFromText() {
-    setError(null)
-    try {
-      const obj = JSON.parse(mutText)
-  setMutPretty(JSON.stringify(obj, null, 2))
-  setBlobForSide('right', obj)
-      setRightSource('手动')
-    } catch (e: any) {
-      setError('mut JSON 解析失败：' + (e?.message ?? String(e)))
-    }
-  }
-
-  async function loadSeedFromExample() {
-    // 先让图加载示例 URL，再异步填充预览；即便预览失败，图也能展示
-    setLeftDataUrl('/graphs/seed.json')
-    setError(null)
-    try {
-      const res = await fetch('/graphs/seed.json')
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const obj = await res.json()
-      const txt = JSON.stringify(obj)
-      setSeedText(txt)
-      setSeedPretty(JSON.stringify(obj, null, 2))
-    } catch (e: any) {
-      // 仅影响预览，不影响图
-      setSeedText('')
-      setSeedPretty('')
-    }
-    setLeftSource('示例')
-  }
-
-  async function loadMutFromExample() {
-    // 同上：先显示图，再尝试拉取预览
-    setRightDataUrl('/graphs/mut.json')
-    setError(null)
-    try {
-      const res = await fetch('/graphs/mut.json')
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const obj = await res.json()
-      const txt = JSON.stringify(obj)
-      setMutText(txt)
-      setMutPretty(JSON.stringify(obj, null, 2))
-    } catch (e: any) {
-      setMutText('')
-      setMutPretty('')
-    }
-    setRightSource('示例')
-  }
+  // 原手动 JSON 模式逻辑已移除
 
   return (
     <div className="space-y-3">
       {/* Header */}
       <div className="card">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">功能演示 · JSON → 图</h2>
-            <div className="flex items-center gap-3 text-white/70 text-sm">输入 → 渲染 → 对照</div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 space-y-1">
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 bg-clip-text text-transparent tracking-wide">{HEADER_TITLE}</h1>
+              <p className="text-sm text-white/55 leading-relaxed">{HEADER_SUBTITLE}</p>
+            </div>
+            <div className="hidden md:flex text-xs text-white/40 flex-col items-end pt-1">
+              <span>Prototype · UI Simulation</span>
+              <span>Academic Alignment</span>
+            </div>
           </div>
-          <p className="text-sm text-white/60">按步骤加载 seed.json 与 mut.json（可用示例或手动粘贴），下方始终提供左右双图，初始为空，加载后实时呈现。</p>
+          <div className="text-xs text-white/50 flex items-start gap-2 bg-white/5 border border-white/10 rounded-xl p-3">
+            <Info size={14} className="mt-0.5 text-sky-300"/> <span>{PIPELINE_DESCRIPTION}</span>
+          </div>
         </div>
       </div>
-      {/* Actions strip */}
+
+      {/* 自动流程演示模块 */}
       <div className="card">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept=".java"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-              className="text-sm"
-            />
-            <button className="btn" onClick={handleUpload} disabled={uploading}>
-              <Upload size={16} /> {uploading ? '上传中...' : '上传 seed (.java)'}
-            </button>
-            <button className="btn btn-primary" onClick={handleMutate} disabled={mutating}>
-              <Wand2 size={16} /> {mutating ? '变异进行中...' : 'InterFuzz 变异'}
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              className="btn"
-              onClick={() => {
-                setLeftDataUrl(null)
-                setRightDataUrl(null)
-                setSeedText('')
-                setSeedPretty('')
-                setMutText('')
-                setMutPretty('')
-                setLeftSource('')
-                setRightSource('')
-              }}
-            >
-              <Trash2 size={16} /> 清空
-            </button>
-          </div>
-        </div>
-        {error && <p className="text-sm text-rose-400 mt-2">错误：{error}</p>}
-      </div>
-      {/* Steps: Seed & Mut */}
-      <div className={`grid gap-3 xl:grid-cols-2`}>
-        <div className="card">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <button className="btn-ghost p-1" onClick={() => setSeedOpen((v) => !v)} aria-label="展开/折叠">
-                {seedOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              <h3 className="font-semibold text-white">步骤 1 · Seed JSON</h3>
-              {leftSource && <span className="badge">来源：{leftSource}</span>}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* 左：输入与控制 */}
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-white flex items-center gap-2"><PlayCircle size={18} className="text-sky-400"/>分析—变异流水线模拟</h3>
+              <button
+                className="btn-primary disabled:opacity-50"
+                disabled={analysisRunning || !selectedFile}
+                onClick={startAutoDemo}
+                aria-label="开始分析"
+              >{analysisRunning ? (<><Loader2 size={16} className="animate-spin"/> 运行中...</>) : '开始分析'}</button>
             </div>
-            <div className="flex gap-2">
-              <button className="btn" onClick={loadSeedFromExample}>示例 seed.json</button>
-              <button className="btn btn-primary" onClick={loadSeedFromText}>加载 JSON</button>
-            </div>
-          </div>
-          {seedOpen && (
-            <>
-              <textarea
-                className="w-full h-40 textarea"
-                placeholder="粘贴 seed.json 内容（包含 nodes/edges）"
-                value={seedText}
-                onChange={(e) => setSeedText(e.target.value)}
+            <div className="flex items-center gap-2 flex-wrap text-xs mb-2">
+              <label className="text-white/60">选择 Seed 文件：</label>
+              <input
+                type="file"
+                accept=".java"
+                onChange={(e)=> onSelectLocalJava(e.target.files?.[0] || null)}
+                className="text-xs"
               />
-              {seedPretty && (
-                <div className="mt-2">
-                  <p className="text-xs text-white/60 mb-1">解析预览：</p>
-                  <pre className="max-h-60 overflow-auto bg-black/40 rounded p-2 text-xs whitespace-pre-wrap">{seedPretty}</pre>
-                </div>
+              <button
+                className="btn text-xs px-2 py-1"
+                onClick={() => setManualOpen((v) => !v)}
+                aria-expanded={manualOpen}
+              >{manualOpen ? '收起手动输入' : '或：手动输入 Java'}</button>
+              {selectedFile && (
+                <>
+                  <button
+                    className="btn text-xs px-2 py-1"
+                    onClick={() => {
+                      setSelectedFile(null)
+                      setSelectedFileContent('')
+                      setManualJavaText('')
+                      setManualOpen(false)
+                      setLeftDataUrl(null); setRightDataUrl(null); setLeftSource(''); setRightSource(''); setMutatedCode(''); setAnalysisDone(false); setCurrentStep(-1)
+                    }}>移除文件</button>
+                  <button
+                    className="btn text-xs px-2 py-1"
+                    disabled={analysisRunning}
+                    onClick={() => { setAnalysisDone(false); setCurrentStep(-1); setMutatedCode(''); startAutoDemo() }}
+                  >重新运行</button>
+                </>
               )}
-            </>
-          )}
-        </div>
-        <div className="card">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <button className="btn-ghost p-1" onClick={() => setMutOpen((v) => !v)} aria-label="展开/折叠">
-                {mutOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              <h3 className="font-semibold text-white">步骤 2 · Mut JSON</h3>
-              {rightSource && <span className="badge">来源：{rightSource}</span>}
             </div>
-            <div className="flex gap-2">
-              <button className="btn" onClick={loadMutFromExample}>示例 mut.json</button>
-              <button className="btn btn-primary" onClick={loadMutFromText}>加载 JSON</button>
+            {manualOpen && (
+              <div className="space-y-2">
+                <label className="text-[11px] text-white/60">手动输入 Java 源码：</label>
+                <textarea
+                  className="w-full h-40 textarea font-mono text-xs"
+                  placeholder="在此粘贴或输入 Java Seed 源码（不会上传，仅本地预览，用于启动模拟流程）"
+                  value={manualJavaText}
+                  onChange={(e) => {
+                    setManualJavaText(e.target.value)
+                    if (e.target.value.trim()) {
+                      // 手动输入时清空文件选择
+                      if (selectedFile) {
+                        setSelectedFile(null)
+                        setSelectedFileContent('')
+                      }
+                    }
+                  }}
+                />
+              </div>
+            )}
+            {!selectedFile && (
+              <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-xs text-white/50">
+                请选择一个 Java Seed 文件后可查看源码并启动分析—变异流程
+              </div>
+            )}
+            {(selectedFileContent || manualJavaText.trim()) && (
+              <div className="relative border border-white/10 rounded-xl bg-black/30 p-3 max-h-56 overflow-auto mb-2">
+                <div className="flex items-center gap-2 text-[11px] mb-2 text-white/50">
+                  <FileCode size={14}/>
+                  {selectedFile ? <span>Seed 文件：{selectedFile?.name}</span> : <span>手动输入：Manual.java</span>}
+                </div>
+                <pre className="text-[11px] leading-relaxed whitespace-pre-wrap font-mono">{selectedFile ? selectedFileContent : manualJavaText}</pre>
+              </div>
+            )}
+            <p className="text-xs text-white/50">导入 Seed 后可启动流程：系统将依次生成初始 / 变异后 HPG，并最终展示测试程序。</p>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-white/60">进度</span>
+                <span className="text-xs text-white/50">{analysisDone ? '完成' : progress + '%'}</span>
+              </div>
+              <div className="w-full h-3 bg-white/10 rounded-lg overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 ${analysisDone ? 'sheen' : ''}`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
           </div>
-          {mutOpen && (
-            <>
-              <textarea
-                className="w-full h-40 textarea"
-                placeholder="粘贴 mut.json 内容（包含 nodes/edges）"
-                value={mutText}
-                onChange={(e) => setMutText(e.target.value)}
-              />
-              {mutPretty && (
-                <div className="mt-2">
-                  <p className="text-xs text-white/60 mb-1">解析预览：</p>
-                  <pre className="max-h-60 overflow-auto bg-black/40 rounded p-2 text-xs whitespace-pre-wrap">{mutPretty}</pre>
+          {/* 右：步骤时间线 & 变异代码 */}
+          <div className="flex-1 space-y-4">
+            <div className="space-y-3" aria-label="Progress Steps">
+              {progressSteps.map((s: string, idx: number) => {
+                const isActive = idx === currentStep && analysisRunning
+                const done = idx < currentStep || (analysisDone && idx === progressSteps.length - 1)
+                const isConnector = PIPELINE_CONNECTORS.some((c: { from: string; to: string; label: string }) => c.label === s)
+                return (
+                  <div key={s} className={`flex items-start gap-3 rounded-xl px-3 py-2 text-sm border ${isConnector ? 'border-dashed' : ''} ${done ? 'border-emerald-500/40 bg-emerald-500/[0.08]' : isActive ? 'border-sky-500/50 bg-sky-500/[0.10]' : 'border-white/10 bg-white/[0.04]'}`}>
+                    <div className="mt-0.5">
+                      {done ? <CheckCircle2 size={16} className="text-emerald-400"/> : isActive ? <Loader2 size={16} className="text-sky-400 animate-spin"/> : <ChevronRight size={16} className="text-white/40"/>}
+                    </div>
+                    <div className="flex-1">
+                      <div className={`font-medium ${isConnector ? 'text-xs tracking-wide uppercase text-white/60' : ''} ${done ? 'text-emerald-300' : isActive ? 'text-sky-300' : isConnector ? '' : 'text-white/70'}`}>{s}</div>
+                      {isActive && <div className="text-[11px] text-white/50 mt-0.5">模拟处理中...</div>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {selectedFile && mutatedCode && (
+              <div className="relative group">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-white/80 text-sm font-semibold">测试程序</h4>
+                  <button className="btn-ghost px-2 py-1 text-xs" onClick={copyMutated}><Copy size={14}/>复制</button>
                 </div>
-              )}
-            </>
-          )}
+                <pre className="max-h-80 overflow-auto bg-black/50 rounded-xl p-4 text-xs leading-relaxed whitespace-pre font-mono border border-white/10">{mutatedCode}</pre>
+              </div>
+            )}
+          </div>
         </div>
+        <div className="mt-5 text-[11px] text-white/40 italic tracking-wide">{PIPELINE_NOTE}</div>
       </div>
+      {error && <div className="card text-sm text-rose-400">错误：{error}</div>}
       {/* Divider */}
       <div className="card">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-white/70">渲染结果</div>
-          <div className="h-px flex-1 mx-3 bg-white/10" />
-          <div className="text-xs text-white/50">双图对照 · 左 Seed / 右 Mut</div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-white/70">图结果</div>
+            <div className="h-px flex-1 mx-3 bg-white/10" />
+            <div className="text-xs text-white/50">Left: 初始 HPG · Right: 变异后 HPG</div>
+          </div>
+          {/* 水平流程示意 */}
+          <div className="hidden md:block">
+            <PipelineFlow
+              coreSteps={PIPELINE_CORE_STEPS}
+              connectors={PIPELINE_CONNECTORS}
+              active={progressSteps[currentStep] || null}
+              completed={new Set(progressSteps.slice(0, currentStep))}
+            />
+          </div>
         </div>
       </div>
       {/* Graphs: 双图固定并排，初始为空 */}
@@ -324,29 +286,17 @@ export default function Demo() {
         <GraphPanel
           dataUrl={effectiveLeftUrl}
           height={600}
-          title={'原始图'}
-          subtitle={leftSource ? `来源：${leftSource}` : undefined}
+          title={'初始 HPG'}
+          subtitle={leftSource || undefined}
         />
         <GraphPanel
           dataUrl={effectiveRightUrl}
           height={600}
-          title="增强图"
-          subtitle={rightSource ? `来源：${rightSource}` : undefined}
+          title="变异后 HPG"
+          subtitle={rightSource || undefined}
         />
       </div>
-      <div className="card text-sm text-white/70">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="font-medium text-white/80">图例</p>
-            <ul className="list-disc list-inside mt-1">
-              <li>线型：solid / dashed / dotted</li>
-              <li>箭头：marker=arrow 表示方向</li>
-              <li>标签：instantiate / call / implement / extend</li>
-            </ul>
-          </div>
-          <div className="text-right text-white/50">网格布局 · 端口连线 · 固定标签距离</div>
-        </div>
-      </div>
+      {/* 图例已移除 per 要求 */}
     </div>
   )
 }
