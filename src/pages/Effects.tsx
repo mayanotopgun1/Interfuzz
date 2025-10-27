@@ -63,10 +63,16 @@ export default function Effects() {
         </table>
       </section>
 
-      {/* README 案例详解（两例） */}
-      <section>
-        <h3 className="text-lg font-semibold mb-3">案例详解（README）</h3>
-        <div className="grid gap-4">
+      {/* 案例详解 */}
+      <section className="card">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-1 h-8 bg-gradient-to-b from-accent to-purple-500 rounded-full"></div>
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent">
+            案例详解
+          </h3>
+        </div>
+        <p className="text-white/70 mb-6">以下展示两个典型的编译器 Bug 案例，包含详细的根因分析和完整的复现代码。</p>
+        <div className="space-y-6">
           {caseStudies.map((cs) => (
             <CaseStudyCard key={cs.id} cs={cs} />
           ))}
