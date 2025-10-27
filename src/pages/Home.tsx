@@ -77,7 +77,7 @@ export default function Home() {
       {/* Cat fixed on the right edge of the Home page */}
       <div className="pointer-events-none hidden md:block fixed right-3 lg:right-6 top-1/2 -translate-y-1/2 z-10">
         <svg
-          className="w-36 h-36 lg:w-48 lg:h-48 float-slow"
+          className="cat-illustration text-white w-36 h-36 lg:w-48 lg:h-48 float-slow"
           viewBox="0 0 200 200"
           fill="none"
           aria-hidden
@@ -92,33 +92,33 @@ export default function Home() {
           <circle cx="130" cy="120" r="90" fill="url(#catGlowHome)" />
 
           {/* tail */}
-          <path d="M150 125c20 0 25 20 10 28-9 5-18-1-18-1" stroke="rgba(255,255,255,0.7)" strokeWidth="3" strokeLinecap="round" />
+          <path d="M150 125c20 0 25 20 10 28-9 5-18-1-18-1" stroke="currentColor" strokeOpacity="0.7" strokeWidth="3" strokeLinecap="round" />
 
           {/* body */}
-          <ellipse cx="110" cy="120" rx="38" ry="48" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.75)" strokeWidth="2" />
+          <ellipse cx="110" cy="120" rx="38" ry="48" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeOpacity="0.75" strokeWidth="2" />
 
           {/* head */}
-          <circle cx="130" cy="72" r="24" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.8)" strokeWidth="2" />
+          <circle cx="130" cy="72" r="24" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeOpacity="0.8" strokeWidth="2" />
           {/* ears */}
-          <path d="M115 62 L120 45 L128 62 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.8)" strokeWidth="2" />
-          <path d="M132 62 L140 45 L145 62 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.8)" strokeWidth="2" />
+          <path d="M115 62 L120 45 L128 62 Z" fill="currentColor" fillOpacity="0.06" stroke="currentColor" strokeOpacity="0.8" strokeWidth="2" />
+          <path d="M132 62 L140 45 L145 62 Z" fill="currentColor" fillOpacity="0.06" stroke="currentColor" strokeOpacity="0.8" strokeWidth="2" />
 
           {/* face */}
-          <circle cx="123" cy="72" r="2.3" fill="rgba(255,255,255,0.88)" />
-          <circle cx="137" cy="72" r="2.3" fill="rgba(255,255,255,0.88)" />
-          <path d="M130 78 q-3 3 -6 0" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" />
-          <path d="M130 78 q3 3 6 0" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" />
-          <path d="M130 74 v4" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="123" cy="72" r="2.3" fill="currentColor" fillOpacity="0.88" />
+          <circle cx="137" cy="72" r="2.3" fill="currentColor" fillOpacity="0.88" />
+          <path d="M130 78 q-3 3 -6 0" stroke="currentColor" strokeOpacity="0.8" strokeWidth="2" strokeLinecap="round" />
+          <path d="M130 78 q3 3 6 0" stroke="currentColor" strokeOpacity="0.8" strokeWidth="2" strokeLinecap="round" />
+          <path d="M130 74 v4" stroke="currentColor" strokeOpacity="0.8" strokeWidth="2" strokeLinecap="round" />
 
           {/* whiskers */}
-          <path d="M118 72 h-10" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M118 76 h-10" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M142 72 h10" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M142 76 h10" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M118 72 h-10" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M118 76 h-10" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M142 72 h10" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M142 76 h10" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.5" strokeLinecap="round" />
 
           {/* paws */}
-          <circle cx="95" cy="164" r="6" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" />
-          <circle cx="120" cy="166" r="6" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" />
+          <circle cx="95" cy="164" r="6" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeOpacity="0.75" strokeWidth="1.5" />
+          <circle cx="120" cy="166" r="6" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeOpacity="0.75" strokeWidth="1.5" />
         </svg>
       </div>
 

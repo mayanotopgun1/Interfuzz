@@ -63,7 +63,7 @@ export default function CaseStudyCard({ cs }: { cs: CaseStudy }) {
           复现代码
         </div>
         <div className="rounded-xl overflow-hidden border border-white/10 shadow-lg">
-          <pre className="!m-0 !bg-[#1e1e1e]"><code ref={codeRef} className="language-java !text-[0.813rem] !leading-relaxed">{cs.code}</code></pre>
+          <pre className="code-preview !m-0"><code ref={codeRef} className="language-java !text-[0.813rem] !leading-relaxed">{cs.code}</code></pre>
         </div>
       </div>
     </div>
