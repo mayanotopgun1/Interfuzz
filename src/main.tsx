@@ -8,6 +8,7 @@ import About from './pages/About'
 import Demo from './pages/Demo'
 import Effects from './pages/Effects'
 import './styles/globals.css'
+import './styles/globals.light.css'
 
 const router = createBrowserRouter([
   {
