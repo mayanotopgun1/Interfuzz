@@ -1,38 +1,71 @@
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
+import hljs from 'highlight.js/lib/core'
+import java from 'highlight.js/lib/languages/java'
+import 'highlight.js/styles/vs2015.css'
 import type { CaseStudy } from '../data/case-studies'
 
+// Register Java language
+hljs.registerLanguage('java', java)
+
 export default function CaseStudyCard({ cs }: { cs: CaseStudy }) {
-  const [open, setOpen] = useState(false)
+  const codeRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (codeRef.current) {
+      hljs.highlightElement(codeRef.current)
+    }
+  }, [cs.code])
+
   return (
-    <div className="card">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <a href={cs.link} target="_blank" rel="noreferrer" className="text-accent hover:underline font-semibold">
-            {cs.id}
-          </a>
-          <div className="text-sm mt-1 font-medium">{cs.title}</div>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <Badge className={compilerCls(cs.compiler)}>{cs.compiler}</Badge>
-            <Badge className={statusCls(cs.status)}>{cs.status}</Badge>
-            <Badge className={priorityCls(cs.priority)}>{cs.priority}</Badge>
-            <Badge className="bg-white/10 text-white/70">{cs.symptom}</Badge>
-          </div>
+    <div className="card hover:shadow-xl transition-shadow duration-300">
+      {/* Header with ID and Title */}
+      <div className="mb-4">
+        <a 
+          href={cs.link} 
+          target="_blank" 
+          rel="noreferrer" 
+          className="text-accent hover:text-accent/80 transition-colors font-bold text-lg flex items-center gap-2 group"
+        >
+          <span>{cs.id}:</span>
+          <span className="text-white/90 font-medium">{cs.title}</span>
+          <svg className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
+
+      {/* Badges */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Badge className={compilerCls(cs.compiler)}>{cs.compiler}</Badge>
+        <Badge className={statusCls(cs.status)}>{cs.status}</Badge>
+        <Badge className={priorityCls(cs.priority)}>{cs.priority}</Badge>
+        <Badge className="bg-purple-600/20 text-purple-300">{cs.symptom}</Badge>
+      </div>
+
+      {/* Key Information */}
+      <div className="space-y-3 mb-4">
+        <div className="bg-white/5 rounded-lg p-3 border-l-4 border-blue-500">
+          <div className="text-sm text-blue-300 font-semibold mb-1.5">关键结构</div>
+          <div className="text-sm text-white/90">{cs.keyStructure}</div>
         </div>
-        <button className="btn-ghost" onClick={() => setOpen((v) => !v)} aria-label="展开/收起代码">
-          {open ? '收起代码' : '查看代码'}
-        </button>
+        <div className="bg-white/5 rounded-lg p-3 border-l-4 border-amber-500">
+          <div className="text-sm text-amber-300 font-semibold mb-1.5">根本原因</div>
+          <div className="text-sm text-white/90 leading-relaxed">{cs.rootCause}</div>
+        </div>
       </div>
 
-      <div className="mt-4 text-sm space-y-1">
-        <p className="text-white/80"><b>关键结构：</b>{cs.keyStructure}</p>
-        <p className="text-white/80"><b>根因：</b>{cs.rootCause}</p>
+      {/* Code with Syntax Highlighting */}
+      <div className="mt-4">
+        <div className="text-sm text-white/60 font-semibold mb-2 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+          复现代码
+        </div>
+        <div className="rounded-xl overflow-hidden border border-white/10 shadow-lg">
+          <pre className="!m-0 !bg-[#1e1e1e]"><code ref={codeRef} className="language-java !text-[0.813rem] !leading-relaxed">{cs.code}</code></pre>
+        </div>
       </div>
-
-      {open && (
-        <pre className="mt-3 p-3 rounded-xl bg-black/40 text-xs overflow-auto whitespace-pre-wrap font-mono">
-{cs.code}
-        </pre>
-      )}
     </div>
   )
 }
