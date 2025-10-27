@@ -163,34 +163,118 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
     const edgesG = g.append('g').attr('class', 'edges')
 
       // helper: pickPort like case script
-      function pickPort(node: any, role: 'classRow' | 'methodRow') {
+      function resolveRowIndex(node: any, role: 'classRow' | 'methodRow', side: 'source' | 'target', attach?: any) {
         const rows = node.rows || []
-        const idx = role === 'methodRow' ? Math.min(1, Math.max(0, rows.length - 1)) : 0
-        return { y: node.y + (idx * node.rowH) + node.rowH / 2 }
+        const firstMethodIdx = rows.findIndex((r: any) => r.type === 'method')
+        const defaultIdx = role === 'classRow' ? 0 : (firstMethodIdx >= 0 ? firstMethodIdx : 0)
+
+        if (attach) {
+          // absolute row (1-based)
+          const absKey = side === 'source' ? 'sourceRow' : 'targetRow'
+          if (typeof attach[absKey] === 'number' && Number.isFinite(attach[absKey])) {
+            const oneBased = attach[absKey] as number
+            const idx = Math.max(0, Math.min(rows.length - 1, Math.round(oneBased - 1)))
+            return idx
+          }
+          // method index within method-only list (0-based)
+          const mKey = side === 'source' ? 'sourceMethodIndex' : 'targetMethodIndex'
+          if (typeof attach[mKey] === 'number' && Number.isFinite(attach[mKey]) && firstMethodIdx >= 0) {
+            const mIdx = Math.max(0, Math.round(attach[mKey] as number))
+            const idx = Math.max(firstMethodIdx, Math.min(rows.length - 1, firstMethodIdx + mIdx))
+            return idx
+          }
+          // substring match on text
+          const sKey = side === 'source' ? 'sourceMatch' : 'targetMatch'
+          if (typeof attach[sKey] === 'string' && attach[sKey]) {
+            const needle = String(attach[sKey]).toLowerCase()
+            const found = rows.findIndex((r: any) => String(r.text || '').toLowerCase().includes(needle))
+            if (found >= 0) return found
+          }
+        }
+        return defaultIdx
       }
 
       const renderEdges = () => {
         edgesG.selectAll('*').remove()
-        edges.forEach((e) => {
+
+        // 1) Prepare edge endpoints and grouping key (based on original ports)
+        type Prepared = {
+          e: (typeof edges)[number]
+          s: any
+          t: any
+          sIdx: number
+          tIdx: number
+          sPortY: number
+          tPortY: number
+          p0x: number
+          p3x: number
+          targetSide: 'east' | 'west'
+        }
+
+        const prepared: Prepared[] = []
+        for (const e of edges) {
           const s = nodeById[e.source]
           const t = nodeById[e.target]
-          if (!s || !t) return
-          const attachSource = (e.attach?.source as any) || (e.semantics === 'call' ? 'methodRow' : 'classRow')
-          const attachTarget = (e.attach?.target as any) || (e.semantics === 'call' ? 'methodRow' : 'classRow')
-          const sPort = pickPort(s, attachSource)
-          const tPort = pickPort(t, attachTarget)
-
-          const p0 = { x: s.x + s.width, y: sPort.y }
+          if (!s || !t) continue
+          const attachSource = (e.attach?.source as any) || 'classRow'
+          const attachTarget = (e.attach?.target as any) || 'classRow'
+          const sIdx = resolveRowIndex(s, attachSource, 'source', e.attach)
+          const tIdx = resolveRowIndex(t, attachTarget, 'target', e.attach)
+          const sPortY = s.y + (sIdx * s.rowH) + s.rowH / 2
+          const tPortY = t.y + (tIdx * t.rowH) + t.rowH / 2
+          const p0x = s.x + s.width
           const targetSide = e.targetSide === 'east' ? 'east' : 'west'
-          const p3 = { x: targetSide === 'east' ? (t.x + t.width) : t.x, y: tPort.y }
+          const p3x = targetSide === 'east' ? (t.x + t.width) : t.x
+          prepared.push({ e, s, t, sIdx, tIdx, sPortY, tPortY, p0x, p3x, targetSide })
+        }
 
-          // extend distance per semantics (case standard)
-          const extend = e.semantics === 'instantiate' ? (meta.layout?.c0ExtendLong ?? 130)
-            : e.semantics === 'call' ? (meta.layout?.c0ExtendShort ?? 100)
-            : 60
+        // 2) Group by identical original endpoints to distribute lane offsets
+        const groups = new Map<string, Prepared[]>()
+        for (const p of prepared) {
+          const key = `${p.p0x}|${p.sPortY}|${p.p3x}|${p.tPortY}`
+          const arr = groups.get(key)
+          if (arr) arr.push(p); else groups.set(key, [p])
+        }
+
+        // helper to generate symmetric offsets without 0 when n==2
+        const genOffsets = (n: number, gap: number) => {
+          if (n <= 1) return [0]
+          if (n === 2) return [-gap / 2, gap / 2]
+          const res: number[] = []
+          const half = Math.floor(n / 2)
+          for (let k = 1; k <= half; k++) {
+            res.push(-k * gap)
+            res.push(k * gap)
+          }
+          if (n % 2 === 1) res.splice(half, 0, 0)
+          return res
+        }
+
+        // Precompute lane offset per edge id
+        const laneById = new Map<string, number>()
+        for (const [, arr] of groups) {
+          // explicit overrides first
+          const explicit = arr.map((p) => ({ id: p.e.id, v: (p.e as any).laneOffset })).filter((x) => typeof x.v === 'number') as { id: string; v: number }[]
+          const implicitTargets = arr.filter((p) => typeof (p.e as any).laneOffset !== 'number')
+          const gap = (implicitTargets[0]?.e as any)?.laneGap ?? 6
+          const offs = genOffsets(implicitTargets.length, gap)
+          // stable order: sort by style line to keep dashed/solid consistent
+          implicitTargets.sort((a, b) => (a.e.style?.line || 'solid').localeCompare(b.e.style?.line || 'solid'))
+          implicitTargets.forEach((p, i) => laneById.set(p.e.id, offs[i] ?? 0))
+          explicit.forEach(({ id, v }) => laneById.set(id, v))
+        }
+
+        // 3) Render with lane offsets applied to source/target port y
+        prepared.forEach((p) => {
+          const e = p.e
+          const lane = laneById.get(e.id) ?? 0
+          const p0 = { x: p.p0x, y: p.sPortY + lane }
+          const p3 = { x: p.p3x, y: p.tPortY + lane }
+
+          const extend = (e as any).extendDistance ?? 80
           const midX = p0.x + extend
           const pts = [p0, { x: midX, y: p0.y }, { x: midX, y: p3.y }, p3]
-          const pathD = d3.line<any>().x((p) => p.x).y((p) => p.y)(pts as any) as string
+          const pathD = d3.line<any>().x((pt) => pt.x).y((pt) => pt.y)(pts as any) as string
 
           edgesG.append('path')
             .attr('d', pathD)
@@ -200,9 +284,8 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
             .attr('stroke-dasharray', lineStyleToStrokeDasharray(e.style?.line) || null)
             .attr('marker-end', e.style?.marker === 'arrow' ? 'url(#arrow)' : null)
 
-          // label with fixed distance from source along polyline
           if (e.label) {
-            const fixedDist = (labelDistance ?? (e as any).labelDistanceFromSource ?? meta.layout?.labelDistanceFromSource ?? 30) as number
+            const fixedDist = ((e as any).labelDistanceFromSource ?? labelDistance ?? meta.layout?.labelDistanceFromSource ?? 30) as number
             const seg1 = extend
             const seg2 = Math.abs(p3.y - p0.y)
             const seg3 = Math.max(0, Math.abs(p3.x - midX))
@@ -225,9 +308,7 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
               ly = p3.y
             }
 
-            let dy = 0
-            if (e.semantics === 'instantiate') dy = -15
-            else if (e.semantics === 'call') dy = 10
+            let dy = (e as any).labelDy ?? 0
 
             const lines = String(e.label).split('\n')
             lines.forEach((line, i) => {

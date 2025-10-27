@@ -138,31 +138,60 @@ export default function Home() {
             </span>
           </div>
           <h2 className="text-xl md:text-2xl font-semibold tracking-tight">
-            复杂跨类结构 + HPG 引导的编译器模糊测试
+            异构程序图建模 + 跨类变异 + 复杂度引导的编译器模糊测试
           </h2>
           <div className="mt-2 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent)] sheen" />
           <p className="mt-3 text-white/80 max-w-4xl">
-            以高层程序图（HPG）统一抽象类/接口/方法及其语义边，面向优化敏感的跨类结构进行定向生成与语义保持变异，
-            结合差分一致性检测在多优化级别/执行后端下捕获优化不当导致的行为差异。
+            针对复杂类间结构难以系统化生成的挑战，InterFuzz 提出三大核心组件：
+            异构程序图（HPG）统一表示类间结构、跨类结构变异算子系统化生成复杂关系、
+            图复杂度引导优先探索易触发缺陷的程序形态。
           </p>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            {[
-              { title: 'HPG 异构建模', desc: '融合类、接口、方法与语义边（继承/实现/调用/覆盖等），支撑全局推理。' },
-              { title: '跨类结构定向生成', desc: '构造层级调用、泛型、覆盖/多态等优化敏感结构，贴近真实场景。' },
-              { title: '结构/语义保持变异', desc: '在不破坏关键语义的前提下局部扰动，扩大探索而不过拟合。' },
-              { title: '差分一致性检测', desc: '跨编译器/优化级别或解释/JIT 后端比对输出/异常差异。' },
-              { title: '可视交互反馈', desc: '图可视化 + 交互调参，帮助理解与快速迭代。' },
-              { title: '实证问题挖掘', desc: '针对真实优化路径定位问题，详情见“效果”。' },
-            ].map((it, i) => (
-              <div key={i} className="card group transition duration-300 hover:-translate-y-1 hover:bg-white/10 hover:shadow-xl">
-                <div className="flex items-start justify-between">
-                  <h3 className="font-medium">{it.title}</h3>
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/40 group-hover:bg-white/80 transition" />
+          <div className="mt-6 space-y-3">
+            {/* 三大核心方法 */}
+            <div className="grid md:grid-cols-3 gap-3">
+              {[
+                { 
+                  title: '🔷 核心 1：HPG 异构程序图', 
+                  desc: '将程序抽象为多类型有向图 HPG(𝒫) = (V, 𝒯, E, ℰ)，统一表示继承、接口、嵌套、泛型、引用等五种类间结构，支持结构化分析与操作。',
+                  highlight: true
+                },
+                { 
+                  title: '🔶 核心 2：跨类结构变异算子', 
+                  desc: '在 HPG 上执行图级原子操作（添加/删除节点或边、修改属性），系统化生成具有复杂类间关系的测试用例，保证语法与语义正确性。',
+                  highlight: true
+                },
+                { 
+                  title: '🔸 核心 3：图复杂度引导', 
+                  desc: '基于节点度数与边类型多样性评估结构复杂度，引导变异过程优先探索"关系多样且连接丰富"的程序形态，高效触发编译器缺陷。',
+                  highlight: true
+                },
+              ].map((it, i) => (
+                <div key={i} className="card group transition duration-300 hover:-translate-y-1 hover:bg-gradient-to-br hover:from-sky-500/10 hover:to-purple-500/10 hover:shadow-xl border-2 border-sky-500/30 hover:border-sky-400/50">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-white">{it.title}</h3>
+                  </div>
+                  <p className="text-white/80 text-sm leading-relaxed">{it.desc}</p>
                 </div>
-                <p className="mt-1 text-white/70 text-sm">{it.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* 其他特性 */}
+            <div className="grid md:grid-cols-3 gap-3">
+              {[
+                { title: '差分测试策略', desc: '对同一程序在不同 Java 编译器（HotSpot JIT、ART、R8 AOT）上的执行结果进行对比，检测优化引入的语义错误。' },
+                { title: '图可视化展示', desc: '将 HPG 图结构可视化呈现，支持种子程序与变异程序的双图对比，直观展现结构变化与复杂度提升。' },
+                { title: '实证成果丰硕', desc: '已发现 20 个真实编译器 Bug，涉及 HotSpot、ART、R8 三大编译器，其中 16 个与类间结构直接相关。' },
+              ].map((it, i) => (
+                <div key={i} className="card group transition duration-300 hover:-translate-y-1 hover:bg-white/10 hover:shadow-xl">
+                  <div className="flex items-start justify-between">
+                    <h3 className="font-medium">{it.title}</h3>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/40 group-hover:bg-white/80 transition" />
+                  </div>
+                  <p className="mt-1 text-white/70 text-sm">{it.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

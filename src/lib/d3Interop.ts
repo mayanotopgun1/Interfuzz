@@ -25,8 +25,31 @@ export type GraphJSON = {
     target: string
     style?: { line?: 'solid' | 'dashed' | 'dotted'; marker?: 'arrow' | 'none' }
     label?: string
+    // semantics is deprecated/unused now; kept for backward-compat only
     semantics?: string
-    attach?: { source?: 'classRow' | 'methodRow'; target?: 'classRow' | 'methodRow' }
+    // optional per-edge lane offset to avoid overlap with parallel edges (pixels, +down/-up)
+    laneOffset?: number
+    // optional gap (pixels) used when auto-distributing lanes within the same pair
+    laneGap?: number
+    attach?: {
+      // legacy roles (still supported)
+      source?: 'classRow' | 'methodRow'
+      target?: 'classRow' | 'methodRow'
+      // optional precise selectors (new):
+      // 1-based absolute row index within the node's rows array
+      sourceRow?: number
+      targetRow?: number
+      // 0-based index among method rows only (first method = 0)
+      sourceMethodIndex?: number
+      targetMethodIndex?: number
+      // substring match against row.text; first match wins
+      sourceMatch?: string
+      targetMatch?: string
+    }
+    // explicit per-edge geometry/tuning (new, all optional)
+    extendDistance?: number // horizontal extend length before turning vertical
+    labelDistanceFromSource?: number // along-edge distance for placing label
+    labelDy?: number // vertical offset for label placement
     targetSide?: 'east' | 'west' | 'north' | 'south'
   }>
 }
