@@ -18,7 +18,7 @@ export default function Home() {
           </div>
           <h1 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight">InterFuzz</h1>
           <p className="mt-4 md:mt-6 text-base md:text-xl text-white/70 max-w-3xl mx-auto">
-            面向复杂“类间结构”的高层程序图（HPG）建模与变异，引导性挖掘 Java 优化编译器缺陷。
+            基于异构程序图的Java优化编译器模糊测试方法，用于验证编译器在处理复杂类间结构时的正确性
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link

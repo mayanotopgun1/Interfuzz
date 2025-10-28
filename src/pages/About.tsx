@@ -112,9 +112,9 @@ export default function About() {
             </p>
             <p className="mt-3 text-white/75 leading-relaxed">
               展望未来，团队将进一步拓展研究方向至
-              <strong className="text-emerald-300">智能程序生成</strong>、
-              <strong className="text-emerald-300">语言无关的测试模型</strong>与
-              <strong className="text-emerald-300">软件可视化与解释性分析</strong>
+              <strong className="text-emerald-300">JIT/AOT编译器优化机制测试</strong>、
+              <strong className="text-emerald-300">大模型辅助的编译器测试</strong>与
+              <strong className="text-emerald-300">LLVM编译器优化机制测试</strong>
               等前沿领域。 同时，InterFuzz
               计划构建开放、协同的研究平台，促进自动化测试工具、编译器安全与人工智能辅助软件工程的深度融合。
             </p>
