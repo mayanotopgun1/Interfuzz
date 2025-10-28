@@ -99,7 +99,9 @@ export default function App() {
         </div>
       </main>
       <footer className="relative mx-auto max-w-7xl px-4 pb-10 text-xs text-white/50">
-        主要技术与数据依据来源：InterFuzz 论文
+        主要技术与数据依据来源：
+        <br />
+        Shiyu Qiu, Ming Wen, Zifan Xie, Hai Jin. Fuzzing Java Optimizing Compilers with Complex Inter-Class Structures Guided by Heterogeneous Program Graphs. In The International Conference on Software Engineering (ICSE), 2026. (CCF-A)
       </footer>
     </div>
   )

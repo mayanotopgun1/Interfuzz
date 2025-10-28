@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
+﻿import { useMemo, useState, useRef, useEffect } from 'react'
 import { BookOpen, AlertTriangle, Layers, Wand2, Gauge, BarChart3, CheckCircle2 } from 'lucide-react'
 
 type PrincipleItem = {
@@ -35,8 +35,8 @@ export default function Principle() {
       render: () => (
         <section className="card route-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">背景与动机</h2>
-            <span className="badge">ICSE 2026</span>
+            <h2 className="text-2xl font-semibold mb-2">背景与动机</h2>
+            {/* <span className="badge">ICSE 2026</span> */}
           </div>
 
           <div className="space-y-4">
@@ -100,9 +100,9 @@ export default function Principle() {
               </p>
               <div className="flex flex-wrap gap-2 mb-3">
                 <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Inheritance 继承</span>
-                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Interface 接口</span>
+                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Interface Implementation 接口实现</span>
                 <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Nesting 嵌套</span>
-                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Generics 泛型</span>
+                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Generic Bounds 泛型</span>
                 <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Reference 引用</span>
               </div>
               <div className="rounded-xl overflow-hidden border-2 border-white/20 p-2 hover:border-white/40 transition-all duration-300 shadow-lg bg-white">
@@ -110,6 +110,7 @@ export default function Principle() {
                   src="/5-inter-class-structures.png" 
                   alt="五种类间结构示例" 
                   className="w-full object-contain rounded-lg"
+                  style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
                 />
                 <div className="mt-2 text-center text-xs text-gray-600 font-medium bg-gray-50 py-1 rounded">
                   图1: InterFuzz 关注的五种核心类间结构
@@ -133,6 +134,7 @@ export default function Principle() {
                   src="/motivating-example.png" 
                   alt="HotSpot JIT 优化错误示例" 
                   className="w-full object-contain rounded-lg"
+                  style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
                 />
                 <div className="mt-2 text-center text-xs text-amber-700 font-medium bg-amber-50 py-1 rounded">
                   图2: 复杂类间交互导致的编译器优化错误
@@ -201,8 +203,8 @@ export default function Principle() {
       render: () => (
         <section className="card route-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">现有模糊测试方法的局限</h2>
-            <span className="badge">挑战</span>
+            <h2 className="text-2xl font-semibold mb-2">现有模糊测试方法的局限</h2>
+            {/* <span className="badge">挑战</span> */}
           </div>
           
           <div className="space-y-4">
@@ -301,28 +303,28 @@ export default function Principle() {
       render: () => (
         <section className="card route-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">我们的方法：InterFuzz</h2>
-            <span className="badge">方案</span>
+            <h2 className="text-2xl font-semibold mb-2">我们的方法：InterFuzz</h2>
+            {/* <span className="badge">方案</span> */}
           </div>
           
           <div className="space-y-4">
             <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-4">
               <p className="text-white/90 text-sm leading-relaxed mb-3">
-                为了解决<strong className="text-rose-300">结构建模困难</strong>、
-                <strong className="text-amber-300">程序生成复杂</strong>、
-                <strong className="text-sky-300">搜索空间爆炸</strong>等三大挑战，
+                为了解决<strong className="text-white">结构建模困难（挑战1）</strong>、
+                <strong className="text-white">程序生成复杂（挑战2）</strong>、
+                <strong className="text-white">搜索空间爆炸（挑战3）</strong>等三大挑战，
                 本文提出了一种新型 Java 编译器模糊测试框架——
-                <strong className="text-pink-300 text-base">InterFuzz</strong>。
-              </p>
-              <div className="bg-white/5 rounded-lg p-3 border-l-4 border-purple-500/50">
-                <p className="text-white/80 text-sm">
-                  <strong className="text-purple-300">InterFuzz</strong> 通过引入 
+                <strong className="text-white">InterFuzz</strong>。
+              {/* </p> */}
+              {/* <div className="bg-white/5 rounded-lg p-3 border-l-4 border-purple-500/50"> */}
+                {/* <p className="text-white/80 text-sm"> */}
+                  <strong className="text-white">InterFuzz</strong> 通过引入 
                   <strong className="text-white">异构程序图（HPG）</strong> 作为核心抽象，
                   并结合 <strong className="text-white">跨类结构变异算子</strong> 与 
-                  <strong className="text-white">图复杂度引导</strong> 三个关键组件，
+                  <strong className="text-white">图复杂度度量</strong> 三个关键组件，
                   实现了系统化的复杂类间结构生成与优化编译器验证。
                 </p>
-              </div>
+              {/* </div> */}
             </div>
 
             <div className="rounded-xl overflow-hidden border-2 border-purple-500/30 p-3 hover:border-purple-500/50 transition-all duration-300 shadow-lg bg-white">
@@ -330,6 +332,7 @@ export default function Principle() {
                 src="/overview.png" 
                 alt="InterFuzz 方法概览" 
                 className="w-full object-contain rounded-lg"
+                style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
               />
               <div className="text-xs text-purple-700 text-center mt-3 font-medium bg-purple-50 py-1 rounded">
                 图3: InterFuzz 整体架构 — HPG 建模 → 跨类变异 → 复杂度引导
@@ -338,44 +341,83 @@ export default function Principle() {
 
             <div className="grid md:grid-cols-3 gap-3">
               <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-transparent border border-sky-500/20 p-4 hover:border-sky-500/40 hover:shadow-lg hover:shadow-sky-500/10 transition-all duration-300 cursor-default">
-                <div className="flex items-center gap-2 mb-2">
-                  <Layers size={20} className="text-sky-400" />
-                  <h3 className="font-semibold text-sky-300">HPG</h3>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-sky-500/20 grid place-items-center shrink-0">
+                    <Layers size={20} className="text-sky-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sky-300 mb-1">异构程序图（HPG）</h3>
+                    <div className="text-[10px] text-gray-700 font-medium">Heterogeneous Program Graph</div>
+                  </div>
                 </div>
-                <p className="text-xs text-white/70 leading-relaxed">
-                  <strong className="text-white">异构程序图</strong>（Heterogeneous Program Graph）：
-                  将程序抽象为多类型有向图，统一表示类间结构
-                </p>
-                <div className="mt-2 pt-2 border-t border-sky-500/20">
-                  <span className="text-xs text-sky-400/70 font-mono">节点 + 边 → 结构化表示</span>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-white/40 text-xs shrink-0 mt-0.5">→</span>
+                    <p className="text-xs text-white/70 leading-relaxed">
+                      <strong className="text-white">应对挑战1·结构建模困难</strong>：
+                      将多样的类间结构语法实现抽象为图中不同的边类型
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-white/40 text-xs shrink-0 mt-0.5">✓</span>
+                    <p className="text-xs text-white/60 leading-relaxed">
+                      统一而简洁的表示方法，支持对各种类间结构进行统一分析与操作
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-4 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-default">
-                <div className="flex items-center gap-2 mb-2">
-                  <Wand2 size={20} className="text-purple-400" />
-                  <h3 className="font-semibold text-purple-300">变异算子</h3>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 grid place-items-center shrink-0">
+                    <Wand2 size={20} className="text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-purple-300 mb-1">跨类结构变异算子</h3>
+                    <div className="text-[10px] text-gray-700 font-medium">Inter-Class Mutators</div>
+                  </div>
                 </div>
-                <p className="text-xs text-white/70 leading-relaxed">
-                  <strong className="text-white">跨类结构变异算子</strong>（Inter-Class Mutators）：
-                  在图上执行原子操作，系统化生成复杂类间关系
-                </p>
-                <div className="mt-2 pt-2 border-t border-purple-500/20">
-                  <span className="text-xs text-purple-400/70 font-mono">原子操作 + 不变量守护</span>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-white/40 text-xs shrink-0 mt-0.5">→</span>
+                    <p className="text-xs text-white/70 leading-relaxed">
+                      <strong className="text-white">应对挑战2·程序生成复杂</strong>：
+                      通过操作HPG在种子程序中生成复杂类间结构
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-white/40 text-xs shrink-0 mt-0.5">✓</span>
+                    <p className="text-xs text-white/60 leading-relaxed">
+                      将困难的类间结构变异转化为可控的高层图操作过程
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="rounded-xl bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/20 p-4 hover:border-pink-500/40 hover:shadow-lg hover:shadow-pink-500/10 transition-all duration-300 cursor-default">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gauge size={20} className="text-pink-400" />
-                  <h3 className="font-semibold text-pink-300">复杂度引导</h3>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-pink-500/20 grid place-items-center shrink-0">
+                    <Gauge size={20} className="text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-pink-300 mb-1">图复杂度度量</h3>
+                    <div className="text-[10px] text-gray-700 font-medium">Graph Complexity Metric</div>
+                  </div>
                 </div>
-                <p className="text-xs text-white/70 leading-relaxed">
-                  <strong className="text-white">图复杂度引导</strong>（Graph Complexity Guidance）：
-                  评估关系多样性与连接规模，优先探索易触发缺陷的结构
-                </p>
-                <div className="mt-2 pt-2 border-t border-pink-500/20">
-                  <span className="text-xs text-pink-400/70 font-mono">多样性 + 规模 → 引导</span>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-white/40 text-xs shrink-0 mt-0.5">→</span>
+                    <p className="text-xs text-white/70 leading-relaxed">
+                      <strong className="text-white">应对挑战3·搜索空间爆炸</strong>：
+                      捕获结构类型多样性与总数量两个关键维度
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-white/40 text-xs shrink-0 mt-0.5">✓</span>
+                    <p className="text-xs text-white/60 leading-relaxed">
+                      引导模糊测试优先选择提升HPG复杂度的变异算子，高效生成易触发缺陷的测试用例
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -396,8 +438,8 @@ export default function Principle() {
       render: () => (
         <section className="card route-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">异构程序图（HPG）</h2>
-            <span className="badge">核心 1</span>
+            <h2 className="text-2xl font-semibold mb-2">异构程序图（HPG）</h2>
+            {/* <span className="badge">核心 1</span> */}
           </div>
           
           <div className="space-y-4">
@@ -505,6 +547,7 @@ export default function Principle() {
                   src="/motivating-example-with-hpg.png" 
                   alt="HPG 示例：Motivating Example" 
                   className="w-full rounded-lg object-contain"
+                  style={{ maxWidth: '100%', margin: '0 auto', display: 'block' }}
                 />
                 <div className="text-xs text-amber-700 text-center mt-3 font-medium bg-amber-50 py-1 rounded">
                   图4: 程序的 HPG 表示 — 节点表示实体，边表示类间关系
@@ -540,8 +583,8 @@ export default function Principle() {
       render: () => (
         <section className="card route-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">跨类结构变异算子（Inter-Class Mutators）</h2>
-            <span className="badge">核心 2</span>
+            <h2 className="text-2xl font-semibold mb-2">跨类结构变异算子（Inter-Class Mutators）</h2>
+            {/* <span className="badge">核心 2</span> */}
           </div>
           
           <div className="space-y-4">
@@ -645,6 +688,7 @@ export default function Principle() {
                   src="/inter-class-mutators.png" 
                   alt="跨类结构变异算子操作示例" 
                   className="w-full rounded-lg object-contain"
+                  style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
                 />
                 <div className="text-xs text-emerald-700 text-center mt-3 font-medium bg-emerald-50 py-1 rounded">
                   图5: 三个代表性变异算子的操作示意
@@ -698,8 +742,8 @@ export default function Principle() {
       render: () => (
         <section className="card route-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">图复杂度引导（Graph Complexity Guidance）</h2>
-            <span className="badge">核心 3</span>
+            <h2 className="text-2xl font-semibold mb-2">图复杂度引导（Graph Complexity Guidance）</h2>
+            {/* <span className="badge">核心 3</span> */}
           </div>
           
           <div className="space-y-4">
@@ -800,8 +844,8 @@ export default function Principle() {
       render: () => (
         <section className="card route-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">实验结果与发现</h2>
-            <span className="badge">成果</span>
+            <h2 className="text-2xl font-semibold mb-2">实验结果与发现</h2>
+            {/* <span className="badge">成果</span> */}
           </div>
           
           <div className="space-y-4">
@@ -918,75 +962,6 @@ export default function Principle() {
 
   return (
   <div className="grid md:grid-cols-[240px_1fr] gap-6 items-start min-h-[85vh]">
-      {/* 顶部轻量概览横幅（仅显示一次） */}
-      <div className="md:col-span-2">
-        <div className="px-1">
-          <div className="inline-flex items-center gap-2">
-            <span className="badge">原理概览</span>
-            <span className="text-sm text-white/70">HPG 模型 · 结构保持变异 · 引导信号 · 差分一致性 · 安全边界</span>
-          </div>
-          <div className="mt-3 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent)]" />
-          {/* 删除“三步速览”应用户要求 */}
-          {/* 术语速查（右侧按钮展开 + 可搜索） */}
-          <div className="mt-3 rounded-xl bg-white/5 border border-white/10 p-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-white/80">术语速查</div>
-              <button
-                type="button"
-                className={
-                  'text-xs px-3 py-1 rounded-full border transition shadow-sm ' +
-                  (glossaryVisible
-                    ? 'bg-pink-500/20 border-pink-500/40 text-pink-200 shadow-pink-500/20 hover:bg-pink-500/25'
-                    : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white')
-                }
-                aria-pressed={glossaryVisible}
-                onClick={() => setGlossaryVisible(v => !v)}
-              >
-                {glossaryVisible ? '收起术语 ✨' : '查询术语 ✨'}
-              </button>
-            </div>
-            {glossaryVisible && (
-              <>
-                <div className="mt-2">
-                  <input
-                    value={glossaryQuery}
-                    onChange={(e) => setGlossaryQuery(e.target.value)}
-                    placeholder="搜索术语/描述…"
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-pink-400/40"
-                  />
-                </div>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  {filteredGlossary.length === 0 && (
-                    <div className="text-xs text-white/50">没有匹配的术语</div>
-                  )}
-                  {filteredGlossary.map(g => (
-                    <div key={g.key} className="max-w-[360px]">
-                      <button
-                        type="button"
-                        className={
-                          'px-2 py-1 rounded-full text-[13px] transition border ' +
-                          (openGlossaryKey === g.key
-                            ? 'bg-white/10 border-white/20 text-white'
-                            : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white')
-                        }
-                        aria-expanded={openGlossaryKey === g.key}
-                        onClick={() => setOpenGlossaryKey(prev => (prev === g.key ? null : g.key))}
-                      >
-                        {g.term}
-                      </button>
-                      {openGlossaryKey === g.key && (
-                        <div className="mt-1 text-xs text-white/75 bg-white/5 border border-white/10 rounded-lg p-2">
-                          {g.desc}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
       {/* 左侧竖向导航（更轻、更灵动） */}
   <aside className="md:sticky md:top-24 self-start">
         <div className="relative pl-3">
@@ -1025,9 +1000,9 @@ export default function Principle() {
       </aside>
 
       {/* 右侧内容区（更高的可视占比） */}
-      <main ref={mainRef} className="space-y-4 min-h-[80vh] pb-12 md:pt-8 grid place-items-center">
+      <main ref={mainRef} className="space-y-4 min-h-[80vh] pb-12">
         {/* 切换内容，带入场动画 */}
-        <div key={current.id} className="route-in w-full flex justify-center">
+        <div key={current.id} className="route-in w-full">
           <div className="w-full max-w-5xl">
             {current.render()}
           </div>
