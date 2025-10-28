@@ -40,5 +40,5 @@ export const MUTATED_CODE_SNIPPET = (seedBase: string) => {
   return `public class ${core}Test {\n    public static void main(String[] args) {\n        ${core} inst = new ${core}();\n        int a = inst.add(2,3); // 期望 5, 变异示例 => 6\n        int b = inst.mul(4,5);\n        System.out.println("add=" + a + ", mul=" + b);\n        if (a != 5) {\n            System.out.println("[DIFF] Inter-Class Mutator 修改影响 add()");\n        }\n    }\n}`
 }
 
-export const HEADER_TITLE = 'InterFuzz 功能展示'
+export const HEADER_TITLE = 'InterFuzz工具使用'
 export const HEADER_SUBTITLE = 'Seed 导入 · 结构分析 · 初始 HPG · Inter-Class Mutator · 变异后 HPG · 测试程序生成'

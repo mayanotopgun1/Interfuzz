@@ -61,7 +61,7 @@ export default function App() {
           <nav className="flex items-center gap-2">
             <NavLink to="/" label="首页" icon={HomeIcon} />
             <NavLink to="/principle" label="原理" icon={BookOpen} />
-            <NavLink to="/demo" label="功能演示" icon={PlaySquare} />
+            <NavLink to="/demo" label="工具使用" icon={PlaySquare} />
             <NavLink to="/effects" label="效果展示" icon={Bug} />
             <NavLink to="/about" label="关于我们" icon={Users} />
             <button
