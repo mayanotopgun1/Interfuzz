@@ -404,7 +404,23 @@ export default function Demo() {
         </div>
       </div>
       {/* 自动流程演示模块 */}
-      <div className="card">
+      <div className="card" id="pipeline-section">
+        {/* 模块醒目头部 */}
+  <div className="relative mb-4 overflow-hidden rounded-xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/25 via-sky-500/20 to-emerald-500/25 px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-cyan-400 to-sky-500 text-white flex items-center justify-center shadow-inner">
+              <PlayCircle size={24} />
+            </div>
+            <div className="flex flex-col">
+              <div className="text-lg md:text-xl font-semibold tracking-wide text-cyan-200 leading-tight">分析—变异流水线</div>
+              <div className="text-xs md:text-sm text-white/65 mt-0.5">结构 → 初始HPG → 变异 → 变异后HPG → 测试程序</div>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-md text-[11px] bg-white/10 border border-white/15 text-white/70 font-medium tracking-wide">核心模块</span>
+          </div>
+          <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_85%_15%,rgba(255,255,255,0.35),transparent_70%)]" />
+        </div>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* 左：控制 + 预览双栈 */}
           <div className="flex-[1.15] space-y-4" ref={leftColumnRef}>
@@ -712,7 +728,7 @@ export default function Demo() {
 
 // 获取 Seed 批量打包组件
 interface AcquireSeedsProps {
-  generateRandomSeed: (iterations: number) => { name: string; content: string }
+  generateRandomSeed: (iterations: number) => { name: string; content: string } // 保留签名兼容，不再使用
   blobUrls: React.MutableRefObject<string[]>
 }
 
@@ -720,11 +736,12 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
   const [count, setCount] = useState<number>(3)
   const [iterations, setIterations] = useState<number>(100)
   const [acquiring, setAcquiring] = useState(false)
-  const [items, setItems] = useState<Array<{ name: string; url: string; content: string }>>([])
+  const [items, setItems] = useState<Array<{ name: string; url: string; size: number }>>([])
   const [zipBuilding, setZipBuilding] = useState(false)
   const [zipProgress, setZipProgress] = useState(0)
   const [zipUrl, setZipUrl] = useState<string | null>(null)
   const [zipJustBuilt, setZipJustBuilt] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // 清理单独创建的 blob (ZIP) URL
   useEffect(() => {
@@ -736,15 +753,24 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
   async function acquire() {
     if (acquiring) return
     setAcquiring(true)
-    // 清理旧的 item urls
-    items.forEach((it) => URL.revokeObjectURL(it.url))
-    const next: Array<{ name: string; url: string; content: string }> = []
+    setError(null)
+    // 清理旧 item urls
+    items.forEach(it => URL.revokeObjectURL(it.url))
+    const next: Array<{ name: string; url: string; size: number }> = []
     for (let i = 0; i < count; i++) {
       const seed = generateRandomSeed(iterations)
-      const blob = new Blob([seed.content], { type: 'text/x-java-source;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      blobUrls.current.push(url)
-      next.push({ name: seed.name, url, content: seed.content })
+      try {
+        const JSZipModule = await import('jszip')
+        const zip = new JSZipModule.default()
+        // 放一个单文件进入zip
+        zip.file(seed.name, seed.content)
+        const blob = await zip.generateAsync({ type: 'blob' })
+        const url = URL.createObjectURL(blob)
+        blobUrls.current.push(url)
+        next.push({ name: seed.name.replace(/\.java$/,'') + '.zip', url, size: blob.size })
+      } catch (e:any) {
+        setError('单个 Seed 打包失败: ' + (e?.message || '未知错误'))
+      }
     }
     setItems(next)
     setAcquiring(false)
@@ -766,11 +792,21 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
     try {
       const JSZipModule = await import('jszip')
       const zip = new JSZipModule.default()
-      items.forEach((it) => {
-        let filename = it.name
-        if (!filename.endsWith('.java') && !filename.endsWith('.txt')) filename = `${filename}.java`
-        zip.file(filename, it.content)
+      items.forEach(it => {
+        // 将每个单独zip文件再嵌入一个总zip (保持名称) —— 需要先fetch blob再添加
+        // 我们已有 blob URLs，可通过 fetch 取回
+        zip.file(it.name, 'PLACEHOLDER') // 占位后替换
       })
+      // 重新写入真实内容
+      for (const it of items) {
+        try {
+          const resp = await fetch(it.url)
+          const blob = await resp.blob()
+          const arrBuff = await blob.arrayBuffer()
+          zip.remove(it.name)
+          zip.file(it.name, arrBuff)
+        } catch {}
+      }
       const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
         setZipProgress(Math.round(metadata.percent))
       })
@@ -783,38 +819,46 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
       document.body.appendChild(a)
       a.click()
       a.remove()
-      // 动态加载庆祝特效
       try {
         const mod = await import('canvas-confetti')
         const confetti = mod.default
         confetti({ particleCount: 90, spread: 72, startVelocity: 28, scalar: 0.9, origin: { y: 0.3 } })
         setZipJustBuilt(true)
         setTimeout(() => setZipJustBuilt(false), 2000)
-      } catch {
-        // ignore
-      }
+      } catch {}
       setZipProgress(100)
-      setTimeout(() => {
-        setZipBuilding(false)
-        setZipProgress(0)
-      }, 400)
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('zip pack failed', e)
-      alert('打包失败，请重试。')
+      setTimeout(() => { setZipBuilding(false); setZipProgress(0) }, 400)
+    } catch (e:any) {
+      setError('总 ZIP 打包失败: ' + (e?.message || '未知错误'))
       setZipBuilding(false)
       setZipProgress(0)
     }
   }
 
   return (
-    <div className="card">
+  <div className="card" id="seed-section">
+      {/* 模块醒目头部 */}
+  <div className="relative mb-4 overflow-hidden rounded-xl border border-emerald-400/30 bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-cyan-500/25 px-5 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center shadow-inner">
+            <Download size={24} />
+          </div>
+          <div className="flex flex-col">
+            <div className="text-lg md:text-xl font-semibold tracking-wide text-emerald-200 leading-tight">种子生成</div>
+            <div className="text-xs md:text-sm text-white/65 mt-0.5">批量 Java Seed 生成 · ZIP 打包下载</div>
+          </div>
+        </div>
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="px-3 py-1.5 rounded-md text-[11px] bg-white/10 border border-white/15 text-white/70 font-medium tracking-wide">核心模块</span>
+        </div>
+        <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.35),transparent_70%)]" />
+      </div>
       <div className="flex items-center justify-between mb-3">
-  <h3 className="font-semibold text-white">种子生成</h3>
+        <h3 className="font-semibold text-white">种子生成</h3>
         <div className="flex items-center gap-2 text-xs text-white/70">
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">数量: <span className="text-white">{count}</span></span>
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">迭代: <span className="text-white">{iterations}</span></span>
-          <span className="text-white/40">批量导出</span>
+          <span className="text-white/40">单独ZIP + 总打包</span>
         </div>
       </div>
       <div className="flex items-center flex-wrap gap-3 text-xs">
@@ -835,20 +879,21 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
             <option value={150}>150</option>
           </select>
         </div>
-  <button className="btn-primary disabled:opacity-50" disabled={acquiring} onClick={acquire} aria-label="种子生成">{acquiring ? (<><Loader2 size={14} className="animate-spin"/> 生成中...</>) : '生成'}</button>
+        <button className="btn-primary disabled:opacity-50" disabled={acquiring} onClick={acquire} aria-label="种子生成">{acquiring ? (<><Loader2 size={14} className="animate-spin"/> 生成中...</>) : '生成'}</button>
         {items.length > 0 && (
           <div className="flex items-center gap-2">
             <button className="btn text-xs px-2 py-1 inline-flex items-center gap-2" onClick={downloadAll} disabled={zipBuilding}>
-              {zipBuilding ? (<><Loader2 size={14} className="animate-spin"/> 打包中 {zipProgress}%</>) : (<><Download size={14}/> 打包并下载 (zip)</>)}
+              {zipBuilding ? (<><Loader2 size={14} className="animate-spin"/> 打包中 {zipProgress}%</>) : (<><Download size={14}/> 总打包下载</>)}
             </button>
             {zipUrl && !zipBuilding && (
-              <a className="text-xs text-white/60 underline" href={zipUrl} download>重新下载 ZIP</a>
+              <a className="text-xs text-white/60 underline" href={zipUrl} download>重新下载总ZIP</a>
             )}
             {zipJustBuilt && !zipBuilding && (
               <span className="text-[11px] text-emerald-300 inline-flex items-center gap-1"><CheckCircle2 size={14}/> 打包完成</span>
             )}
           </div>
         )}
+        {error && <span className="text-rose-400 text-xs">{error}</span>}
       </div>
       {items.length > 0 && (
         <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -857,16 +902,17 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
               <div className="flex items-center justify-between">
                 <div className="truncate text-white/80 text-xs" title={it.name}>{it.name}</div>
                 <button className="btn-ghost text-[11px] px-2 py-1 inline-flex items-center gap-1" onClick={() => downloadOne(it)}>
-                  <Download size={12}/> 下载
+                  <Download size={12}/> 单独
                 </button>
               </div>
+              <div className="text-[10px] text-white/40 mt-0.5">{Math.round(it.size/1024)} KB</div>
             </div>
           ))}
         </div>
       )}
       {zipBuilding && (
         <div className="mt-3">
-          <div className="text-xs text-white/60 mb-1">正在打包 {items.length} 个 Seed：{zipProgress}%</div>
+          <div className="text-xs text-white/60 mb-1">正在打包 {items.length} 个 Seed 包：{zipProgress}%</div>
           <div className="w-full h-3 bg-white/10 rounded-lg overflow-hidden">
             <div className="h-full transition-all duration-200 bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400" style={{ width: `${zipProgress}%` }} />
           </div>
