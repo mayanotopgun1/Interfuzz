@@ -3,17 +3,13 @@
     "title": "Code Structure Diagram",
     "layout": {
       "mode": "grid",
-      "colGap": 200,
-      "rowGap": 180,
-      "nodeSpacing": "adaptive",
-      "edgeRouting": "curved"
+      "colGap": 170,
+      "rowGap": 160,
+      "c0ExtendLong": 130,
+      "c0ExtendShort": 100,
+      "labelDistanceFromSource": 80
     },
-    "nodeDefaults": {
-      "width": 190,
-      "rowHeight": 30,
-      "padding": 8,
-      "minHeight": 60
-    }
+    "nodeDefaults": { "width": 180, "rowHeight": 30, "padding": 8 }
   },
   "nodes": [
     {
