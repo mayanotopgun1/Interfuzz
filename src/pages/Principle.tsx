@@ -1,4 +1,5 @@
-﻿import { useMemo, useState, useRef, useEffect } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import ThemedImage from '../components/ThemedImage'
 import { BookOpen, AlertTriangle, Layers, Wand2, Gauge, BarChart3, CheckCircle2 } from 'lucide-react'
 
 type PrincipleItem = {
@@ -105,14 +106,15 @@ export default function Principle() {
                 <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Generic Bounds 泛型</span>
                 <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Reference 引用</span>
               </div>
-              <div className="rounded-xl overflow-hidden border-2 border-white/20 p-2 hover:border-white/40 transition-all duration-300 shadow-lg bg-white">
-                <img 
-                  src="/5-inter-class-structures.png" 
-                  alt="五种类间结构示例" 
+              <div className="rounded-xl overflow-hidden border-2 border-white/20 p-2 hover:border-white/40 transition-all duration-300 shadow-lg themed-surface">
+                <ThemedImage
+                  lightSrc="/5-inter-class-structures-light.png"
+                  darkSrc="/5-inter-class-structures-dark.png"
+                  alt="五种类间结构示例"
                   className="w-full object-contain rounded-lg"
                   style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
                 />
-                <div className="mt-2 text-center text-xs text-gray-600 font-medium bg-gray-50 py-1 rounded">
+                <div className="mt-2 text-center text-xs font-medium caption-surface py-1 rounded">
                   图1: InterFuzz 关注的五种核心类间结构
                 </div>
               </div>
@@ -129,14 +131,15 @@ export default function Principle() {
                 <code className="px-1.5 py-0.5 rounded bg-white/10 text-sky-300 font-mono">C2</code>，
                 它们之间通过<strong className="text-white">静态字段和初始化块</strong>发生交互。
               </p>
-              <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 p-3 hover:border-amber-500/60 transition-all duration-300 shadow-lg bg-white">
-                <img 
-                  src="/motivating-example.png" 
-                  alt="HotSpot JIT 优化错误示例" 
+              <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 p-3 hover:border-amber-500/60 transition-all duration-300 shadow-lg themed-surface">
+                <ThemedImage
+                  lightSrc="/motivating-example-light.png"
+                  darkSrc="/motivating-example-dark.jpg"
+                  alt="HotSpot JIT 优化错误示例"
                   className="w-full object-contain rounded-lg"
                   style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
                 />
-                <div className="mt-2 text-center text-xs text-amber-700 font-medium bg-amber-50 py-1 rounded">
+                <div className="mt-2 text-center text-xs font-medium bg-amber-500/10 text-amber-300 py-1 rounded">
                   图2: 复杂类间交互导致的编译器优化错误
                 </div>
               </div>
@@ -327,14 +330,15 @@ export default function Principle() {
               {/* </div> */}
             </div>
 
-            <div className="rounded-xl overflow-hidden border-2 border-purple-500/30 p-3 hover:border-purple-500/50 transition-all duration-300 shadow-lg bg-white">
-              <img 
-                src="/overview.png" 
-                alt="InterFuzz 方法概览" 
+            <div className="rounded-xl overflow-hidden border-2 border-purple-500/30 p-3 hover:border-purple-500/50 transition-all duration-300 shadow-lg themed-surface">
+              <ThemedImage
+                lightSrc="/overview-light.png"
+                darkSrc="/overview-dark.png"
+                alt="InterFuzz 方法概览"
                 className="w-full object-contain rounded-lg"
                 style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
               />
-              <div className="text-xs text-purple-700 text-center mt-3 font-medium bg-purple-50 py-1 rounded">
+              <div className="text-xs text-purple-300 text-center mt-3 font-medium bg-purple-500/10 py-1 rounded">
                 图3: InterFuzz 整体架构 — HPG 建模 → 跨类变异 → 复杂度引导
               </div>
             </div>
@@ -542,14 +546,15 @@ export default function Principle() {
                 而 <code className="px-1.5 py-0.5 rounded bg-white/10 text-purple-300">I2 → I1</code> 的 
                 <strong className="text-white">Inheritance</strong> 边表示接口继承。
               </p>
-              <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 p-3 hover:border-amber-500/60 transition-all duration-300 shadow-lg bg-white">
-                <img 
-                  src="/motivating-example-with-hpg.png" 
-                  alt="HPG 示例：Motivating Example" 
+              <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 p-3 hover:border-amber-500/60 transition-all duration-300 shadow-lg themed-surface">
+                <ThemedImage
+                  lightSrc="/motivating-example-with-hpg-light.png"
+                  darkSrc="/motivating-example-with-hpg-dark.png"
+                  alt="HPG 示例：Motivating Example"
                   className="w-full rounded-lg object-contain"
                   style={{ maxWidth: '100%', margin: '0 auto', display: 'block' }}
                 />
-                <div className="text-xs text-amber-700 text-center mt-3 font-medium bg-amber-50 py-1 rounded">
+                <div className="text-xs text-amber-300 text-center mt-3 font-medium bg-amber-500/10 py-1 rounded">
                   图4: 程序的 HPG 表示 — 节点表示实体，边表示类间关系
                 </div>
               </div>
@@ -683,14 +688,15 @@ export default function Principle() {
                 每个变异算子对应一种原子操作，保证生成的程序在语法和语义上都是正确的。
               </p>
               
-              <div className="rounded-xl overflow-hidden border-2 border-emerald-500/40 p-3 hover:border-emerald-500/60 transition-all duration-300 shadow-lg bg-white mb-4">
-                <img 
-                  src="/inter-class-mutators.png" 
-                  alt="跨类结构变异算子操作示例" 
+              <div className="rounded-xl overflow-hidden border-2 border-emerald-500/40 p-3 hover:border-emerald-500/60 transition-all duration-300 shadow-lg themed-surface mb-4">
+                <ThemedImage
+                  lightSrc="/inter-class-mutators-light.png"
+                  darkSrc="/inter-class-mutators-dark.jpg"
+                  alt="跨类结构变异算子操作示例"
                   className="w-full rounded-lg object-contain"
                   style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
                 />
-                <div className="text-xs text-emerald-700 text-center mt-3 font-medium bg-emerald-50 py-1 rounded">
+                <div className="text-xs text-emerald-300 text-center mt-3 font-medium bg-emerald-500/10 py-1 rounded">
                   图5: 三个代表性变异算子的操作示意
                 </div>
               </div>
