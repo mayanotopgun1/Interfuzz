@@ -72,6 +72,14 @@ export default function Demo() {
   // 图区域临时脉冲高亮 (点击“可视化变异过程”时触发)
   const [graphPulse, setGraphPulse] = useState(false)
 
+  // 可选图数据集（演示集与真实示例集）
+  const GRAPH_SETS: Array<{ id: string; label: string; seed: string; mutated: string }> = [
+    { id: 'demo', label: '演示集 seed/mut', seed: '/graphs/seed.json', mutated: '/graphs/mut.json' },
+    { id: 'example', label: '真实示例 input/output', seed: '/graphs/input.json', mutated: '/graphs/output.json' }
+  ]
+  const [graphSetId, setGraphSetId] = useState<string>('example') // 默认直接展示真实示例
+  const activeGraphSet = GRAPH_SETS.find(g => g.id === graphSetId) || GRAPH_SETS[0]
+
   // 轻量主题检测（通过根元素是否含有 theme-light class）
   function useIsLightTheme(): boolean {
     const [isLight, setIsLight] = useState<boolean>(() => typeof document !== 'undefined' && document.documentElement.classList.contains('theme-light'))
@@ -270,15 +278,17 @@ export default function Demo() {
       setCurrentStep(i)
       // 针对具体阶段做出可见效果
       if (progressSteps[i].includes('初始 HPG')) {
-        setLeftDataUrl('/graphs/seed.json')
+        // 根据当前选择的数据集加载左侧图
+        setLeftDataUrl(activeGraphSet.seed)
         const seedFileBase = seedName || 'Seed.java'
-        setLeftSource(seedFileBase)
+        // 将图文件名附加在来源说明中，帮助区分数据集
+        setLeftSource(`${seedFileBase} · ${activeGraphSet.seed.split('/').pop()}`)
       }
       // 结构分析阶段：只生成统计，不加载图（假设步骤名包含“结构分析”）
       if (progressSteps[i].includes('结构分析')) {
-        // 预加载种子图数据用于统计展示
+        // 预加载当前数据集的种子图数据用于统计展示
         try {
-          const resp = await fetch('/graphs/seed.json')
+          const resp = await fetch(activeGraphSet.seed)
           if (resp.ok) {
             const data: GraphData = await resp.json()
             const summary = summarizeGraph(data)
@@ -287,9 +297,9 @@ export default function Demo() {
         } catch {}
       }
       if (progressSteps[i].includes('变异后 HPG')) {
-        setRightDataUrl('/graphs/mut.json')
+        setRightDataUrl(activeGraphSet.mutated)
         const seedFileBase = seedName || 'Seed.java'
-        setRightSource(`${seedFileBase.replace(/\.java$/,'')}-after.json`)
+        setRightSource(`${seedFileBase.replace(/\.java$/,'')}-after · ${activeGraphSet.mutated.split('/').pop()}`)
       }
       if (progressSteps[i].includes('测试程序生成')) {
         const seedBase = (seedName || 'Seed.java')
@@ -428,6 +438,24 @@ export default function Demo() {
                 onClick={startAutoDemo}
                 aria-label="开始分析"
               >{analysisRunning ? (<><Loader2 size={16} className="animate-spin"/> 运行中...</>) : '开始分析'}</button>
+            </div>
+            {/* 图数据集选择器 */}
+            <div className="flex items-center gap-2 text-[11px] flex-wrap">
+              <label className="text-white/60">图数据集:</label>
+              {GRAPH_SETS.map(gs => (
+                <button
+                  key={gs.id}
+                  type="button"
+                  disabled={analysisRunning}
+                  onClick={() => {
+                    setGraphSetId(gs.id)
+                    // 切换数据集时重置所有图相关状态
+                    setLeftDataUrl(null); setRightDataUrl(null); setLeftSource(''); setRightSource('')
+                    setSeedGraphSummary(null); setMutGraphSummary(null); setGraphDiff(null); setCompareMode(false); setCompareJustActivated(false)
+                  }}
+                  className={`px-2 py-1 rounded-md border text-xs transition ${graphSetId === gs.id ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-200' : 'bg-white/5 border-white/10 text-white/50 hover:text-white/70 hover:bg-white/10'}`}
+                >{gs.label}</button>
+              ))}
             </div>
             <div className="flex items-center gap-2 flex-wrap text-xs mb-1 relative">
               <label className="text-white/60">Seed：</label>
