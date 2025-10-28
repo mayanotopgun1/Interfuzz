@@ -21,6 +21,8 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
   const [error, setError] = useState<string | null>(null)
   const zoomCtl = useRef<{ reset(): void; destroy(): void; scaleBy: (factor: number) => void } | null>(null)
   const [reloadTick, setReloadTick] = useState(0)
+  // track theme changes to re-render with correct colors
+  const [themeTick, setThemeTick] = useState(0)
 
   useEffect(() => {
     if (!svgRef.current) return
@@ -29,6 +31,21 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
     if (zoomCtl.current) zoomCtl.current.destroy()
     zoomCtl.current = applyZoom(svg as any, g as any)
     return () => { zoomCtl.current?.destroy() }
+  }, [])
+
+  // re-render when theme class toggles on <html>
+  useEffect(() => {
+    const el = document.documentElement
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'class') {
+          setThemeTick((v) => v + 1)
+          break
+        }
+      }
+    })
+    mo.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => mo.disconnect()
   }, [])
 
   useEffect(() => {
@@ -64,6 +81,20 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
   if (!svgRef.current) return 0
   const svg = d3.select(svgRef.current)
       const g = svg.select('g#graph')
+      const isLight = document.documentElement.classList.contains('theme-light')
+
+      // color palette based on theme
+      const colors = {
+        nodeFill: isLight ? '#ffffff' : '#111827',
+        nodeStroke: isLight ? '#e5e7eb' : 'rgba(255,255,255,0.22)',
+        rowDivider: isLight ? '#e5e7eb' : 'rgba(255,255,255,0.12)',
+        rowTextDefault: isLight ? '#111827' : '#ffffff',
+        rowTextClass: isLight ? '#0f766e' : '#4FD1C5', // teal-700 vs teal-300
+        rowTextInterface: isLight ? '#0e7490' : '#8adade', // cyan-700 vs light-cyan
+        edgeStroke: isLight ? '#94A3B8' : '#E2E8F0', // slate-400 vs gray-200
+        edgeLabel: isLight ? '#475569' : '#E5E7EB', // slate-600 vs gray-200
+        shadowOpacity: isLight ? 0.12 : 0.35,
+      }
       // prepare defs: clear and add arrow marker + node shadow filter for better contrast
       const defs = svg.select('defs')
       defs.selectAll('*').remove()
@@ -77,7 +108,7 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         .attr('orient', 'auto-start-reverse')
       marker.append('path')
         .attr('d', 'M 0 0 L 10 5 L 0 10 z')
-        .attr('fill', '#E2E8F0')
+        .attr('fill', colors.edgeStroke)
 
       const filter = defs.append('filter').attr('id', 'nodeShadow')
       filter.append('feDropShadow')
@@ -85,7 +116,7 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         .attr('dy', 1)
         .attr('stdDeviation', 2)
         .attr('flood-color', '#000')
-        .attr('flood-opacity', 0.35)
+        .attr('flood-opacity', colors.shadowOpacity)
       g.selectAll('*').remove()
 
       // defs markers
@@ -133,8 +164,8 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         .attr('height', (d: any) => d.height)
         .attr('rx', 12)
         .attr('ry', 12)
-        .attr('fill', '#111827')
-        .attr('stroke', 'rgba(255,255,255,0.22)')
+        .attr('fill', colors.nodeFill)
+        .attr('stroke', colors.nodeStroke)
         .attr('filter', 'url(#nodeShadow)')
 
       ;(nodeSel as any).each(function(this: any, d: any) {
@@ -145,13 +176,13 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
           // row background (optional subtle line)
           group.append('line')
             .attr('x1', 0).attr('x2', d.width).attr('y1', i * rowH).attr('y2', i * rowH)
-            .attr('stroke', 'rgba(255,255,255,0.12)')
+            .attr('stroke', colors.rowDivider)
           const y = i * rowH + rowH / 2
           group.append('text')
             .attr('x', 12)
             .attr('y', y)
             .attr('dominant-baseline', 'middle')
-            .attr('fill', row.type === 'class' ? '#4FD1C5' : row.type === 'interface' ? '#8adade' : '#ffffff')
+            .attr('fill', row.type === 'class' ? colors.rowTextClass : row.type === 'interface' ? colors.rowTextInterface : colors.rowTextDefault)
             .attr('font-size', row.type === 'method' ? 12 : 13)
             .text(row.text)
         })
@@ -279,7 +310,7 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
           edgesG.append('path')
             .attr('d', pathD)
             .attr('fill', 'none')
-            .attr('stroke', '#E2E8F0')
+            .attr('stroke', colors.edgeStroke)
             .attr('stroke-width', 1.8)
             .attr('stroke-dasharray', lineStyleToStrokeDasharray(e.style?.line) || null)
             .attr('marker-end', e.style?.marker === 'arrow' ? 'url(#arrow)' : null)
@@ -317,7 +348,7 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
                 .attr('y', ly + dy + i * 12)
                 .attr('text-anchor', 'middle')
                 .attr('font-size', 11)
-                .attr('fill', '#E5E7EB')
+                .attr('fill', colors.edgeLabel)
                 .text(line)
             })
           }
@@ -345,7 +376,7 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
 
       return layoutMs
     }
-  }, [dataUrl, labelDistance, reloadTick])
+  }, [dataUrl, labelDistance, reloadTick, themeTick])
 
   if (error) {
     return (

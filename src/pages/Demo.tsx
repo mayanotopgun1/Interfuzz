@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import GraphPanel from '../components/GraphPanel'
-import { Trash2, PlayCircle, CheckCircle2, Loader2, Copy, Info, FileCode, ChevronRight } from 'lucide-react'
+import { Trash2, PlayCircle, CheckCircle2, Loader2, Info, FileCode, ChevronRight } from 'lucide-react'
 import { PIPELINE_CORE_STEPS, PIPELINE_CONNECTORS, PIPELINE_PROGRESS_SEQUENCE, PIPELINE_DESCRIPTION, PIPELINE_NOTE, MUTATED_CODE_HEADER, MUTATION_EXPLANATION, MUTATED_CODE_SNIPPET, HEADER_TITLE, HEADER_SUBTITLE } from '../data/terminology'
 import PipelineFlow from '../components/PipelineFlow'
+import CodePreview from '../components/CodePreview'
 
 export default function Demo() {
   const [leftDataUrl, setLeftDataUrl] = useState<string | null>(null)
@@ -17,6 +18,22 @@ export default function Demo() {
   const [leftSource, setLeftSource] = useState<string>('')
   const [rightSource, setRightSource] = useState<string>('')
 
+  // ---- 内置 seed 文件（不在 UI 暴露“示例”字样，仅以文件名呈现） ----
+  const seeds = [
+    {
+      name: 'seed1.java',
+      content: `public class Seed1 {\n  public static void main(String[] args) {\n    System.out.println("Hello InterFuzz Seed1");\n  }\n}`,
+    },
+    {
+      name: 'seed2.java',
+      content: `interface I1 { default int v(){ return 1; } }\nclass C1 implements I1 { static String s = "x"; static { s = s + "y"; } }\npublic class Seed2 {\n  public static void main(String[] args) { System.out.println(new C1().v()); }\n}`,
+    },
+    {
+      name: 'seed3.java',
+      content: `class A { static int n = 1; }\nclass B { static { A.n = 2; } }\npublic class Seed3 {\n  public static void main(String[] args){ System.out.println(A.n); }\n}`,
+    },
+  ] as const
+
   // ---- 自动流程演示相关状态 ----
   const progressSteps = PIPELINE_PROGRESS_SEQUENCE
   const [analysisRunning, setAnalysisRunning] = useState(false)
@@ -29,10 +46,10 @@ export default function Demo() {
   // 模拟步骤执行
   async function startAutoDemo() {
     if (analysisRunning) return
-    const hasManual = manualJavaText.trim().length > 0
-    const seedName = selectedFile?.name || (hasManual ? 'Manual.java' : '')
-    if (!selectedFile && !hasManual) {
-      setError('请先选择一个 Java Seed 文件或手动输入 Java 源码')
+    const hasManual = false
+    const seedName = selectedFile?.name || ''
+    if (!selectedFile) {
+      setError('请先选择一个 Java Seed 文件')
       return
     }
     // reset
@@ -61,12 +78,8 @@ export default function Demo() {
         setRightSource(`${seedFileBase.replace(/\.java$/,'')}-after.json`)
       }
       if (progressSteps[i].includes('测试程序生成')) {
-        if (selectedFile || hasManual) {
-          const seedBase = (seedName || 'Calculator.java')
-          setMutatedCode(MUTATED_CODE_HEADER + MUTATION_EXPLANATION + MUTATED_CODE_SNIPPET(seedBase))
-        } else {
-          setMutatedCode('')
-        }
+        const seedBase = (seedName || 'Seed.java')
+        setMutatedCode(MUTATED_CODE_HEADER + MUTATION_EXPLANATION + MUTATED_CODE_SNIPPET(seedBase))
       }
       // 不同阶段不同停顿模拟耗时
       await delay( i === 0 ? 800 : i === progressSteps.length - 1 ? 600 : 900 )
@@ -75,10 +88,7 @@ export default function Demo() {
     setAnalysisDone(true)
   }
 
-  function copyMutated() {
-    if (!mutatedCode) return
-    navigator.clipboard.writeText(mutatedCode).catch(()=>{})
-  }
+  // 复制逻辑由 CodePreview 内部处理
 
   // 初始两个图都为空
 
@@ -109,6 +119,26 @@ export default function Demo() {
       setSelectedFileContent(text)
     }
     reader.readAsText(file)
+  }
+
+  // 选择内置 seed：构造内存 File，并直接写入内容与状态
+  function selectSeed(idx: number) {
+    const seed = seeds[idx]
+    // 使用 Blob/File 构造一个内存文件对象
+    const file = new File([seed.content], seed.name, { type: 'text/x-java-source;charset=utf-8' })
+    setSelectedFile(file)
+    setSelectedFileContent(seed.content)
+    setManualJavaText('')
+    setManualOpen(false)
+    // 清理结果区，等待用户点击“开始分析”
+    setAnalysisDone(false)
+    setCurrentStep(-1)
+    setMutatedCode('')
+    setLeftDataUrl(null)
+    setRightDataUrl(null)
+    setLeftSource('')
+    setRightSource('')
+    setError(null)
   }
 
   // 原手动 JSON 模式逻辑已移除
@@ -156,11 +186,39 @@ export default function Demo() {
                 onChange={(e)=> onSelectLocalJava(e.target.files?.[0] || null)}
                 className="text-xs"
               />
-              <button
-                className="btn text-xs px-2 py-1"
-                onClick={() => setManualOpen((v) => !v)}
-                aria-expanded={manualOpen}
-              >{manualOpen ? '收起手动输入' : '或：手动输入 Java'}</button>
+              {/* 预选 Seed：紧凑卡片（无内嵌代码预览） */}
+              <div className="grid grid-cols-3 gap-2 w-full max-w-xl">
+                {seeds.map((s, idx) => {
+                  const isActive = selectedFile?.name === s.name
+                  return (
+                    <button
+                      type="button"
+                      key={s.name}
+                      onClick={() => selectSeed(idx)}
+                      className={`relative text-left rounded-xl px-3 py-2 border transition-all ${isActive ? 'border-sky-400 bg-sky-500/10 shadow-sm' : 'border-white/10 bg-white/5 hover:border-sky-400/40 hover:bg-sky-500/5'}`}
+                      aria-pressed={isActive}
+                    >
+                      {/* 选中标记 */}
+                      {isActive && (
+                        <span className="absolute right-2 top-2 text-sky-300"><CheckCircle2 size={14} /></span>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <div className={`grid place-items-center w-6 h-6 rounded-md ${isActive ? 'bg-sky-500/20' : 'bg-white/10'}`}>
+                          <FileCode size={14} className={isActive ? 'text-sky-300' : 'text-white/70'} />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-medium text-white/90 leading-none">{s.name}</div>
+                          <div className="mt-1 flex items-center gap-1 text-[10px] text-white/50">
+                            <span className="px-1.5 py-0.5 rounded bg-white/10">Java</span>
+                            <span>·</span>
+                            <span>Seed</span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
               {selectedFile && (
                 <>
                   <button
@@ -180,38 +238,14 @@ export default function Demo() {
                 </>
               )}
             </div>
-            {manualOpen && (
-              <div className="space-y-2">
-                <label className="text-[11px] text-white/60">手动输入 Java 源码：</label>
-                <textarea
-                  className="w-full h-40 textarea font-mono text-xs"
-                  placeholder="在此粘贴或输入 Java Seed 源码（不会上传，仅本地预览，用于启动模拟流程）"
-                  value={manualJavaText}
-                  onChange={(e) => {
-                    setManualJavaText(e.target.value)
-                    if (e.target.value.trim()) {
-                      // 手动输入时清空文件选择
-                      if (selectedFile) {
-                        setSelectedFile(null)
-                        setSelectedFileContent('')
-                      }
-                    }
-                  }}
-                />
-              </div>
-            )}
             {!selectedFile && (
               <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-xs text-white/50">
                 请选择一个 Java Seed 文件后可查看源码并启动分析—变异流程
               </div>
             )}
-            {(selectedFileContent || manualJavaText.trim()) && (
-              <div className="relative border border-white/10 rounded-xl bg-black/30 p-3 max-h-56 overflow-auto mb-2">
-                <div className="flex items-center gap-2 text-[11px] mb-2 text-white/50">
-                  <FileCode size={14}/>
-                  {selectedFile ? <span>Seed 文件：{selectedFile?.name}</span> : <span>手动输入：Manual.java</span>}
-                </div>
-                <pre className="text-[11px] leading-relaxed whitespace-pre-wrap font-mono">{selectedFile ? selectedFileContent : manualJavaText}</pre>
+            {selectedFile && selectedFileContent && (
+              <div className="mb-2">
+                <CodePreview code={selectedFileContent} language="java" filename={selectedFile?.name || 'Seed.java'} maxHeight={256} />
               </div>
             )}
             <p className="text-xs text-white/50">导入 Seed 后可启动流程：系统将依次生成初始 / 变异后 HPG，并最终展示测试程序。</p>
@@ -237,8 +271,18 @@ export default function Demo() {
                 const isConnector = PIPELINE_CONNECTORS.some((c: { from: string; to: string; label: string }) => c.label === s)
                 return (
                   <div key={s} className={`flex items-start gap-3 rounded-xl px-3 py-2 text-sm border ${isConnector ? 'border-dashed' : ''} ${done ? 'border-emerald-500/40 bg-emerald-500/[0.08]' : isActive ? 'border-sky-500/50 bg-sky-500/[0.10]' : 'border-white/10 bg-white/[0.04]'}`}>
-                    <div className="mt-0.5">
-                      {done ? <CheckCircle2 size={16} className="text-emerald-400"/> : isActive ? <Loader2 size={16} className="text-sky-400 animate-spin"/> : <ChevronRight size={16} className="text-white/40"/>}
+                    <div className="mt-0.5 min-w-4 flex items-center justify-center">
+                      {isActive ? (
+                        <Loader2 size={16} className="text-sky-400 animate-spin"/>
+                      ) : done ? (
+                        isConnector ? (
+                          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true" />
+                        ) : (
+                          <CheckCircle2 size={16} className="text-emerald-400"/>
+                        )
+                      ) : (
+                        <ChevronRight size={16} className="text-white/40"/>
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className={`font-medium ${isConnector ? 'text-xs tracking-wide uppercase text-white/60' : ''} ${done ? 'text-emerald-300' : isActive ? 'text-sky-300' : isConnector ? '' : 'text-white/70'}`}>{s}</div>
@@ -252,9 +296,13 @@ export default function Demo() {
               <div className="relative group">
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-white/80 text-sm font-semibold">测试程序</h4>
-                  <button className="btn-ghost px-2 py-1 text-xs" onClick={copyMutated}><Copy size={14}/>复制</button>
                 </div>
-                <pre className="max-h-80 overflow-auto bg-black/50 rounded-xl p-4 text-xs leading-relaxed whitespace-pre font-mono border border-white/10">{mutatedCode}</pre>
+                <CodePreview
+                  code={mutatedCode}
+                  language="java"
+                  filename={`${(selectedFile?.name?.replace(/\.java$/, '') || 'Seed')}Test.java`}
+                  maxHeight={320}
+                />
               </div>
             )}
           </div>
