@@ -26,14 +26,18 @@ export default function About() {
       {/* Page header */}
       <section className="card">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500/20 to-purple-500/20 border border-white/10 grid place-items-center shadow-lg">
-            <Building2 size={26} className="text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-white/90 border border-white/20 grid place-items-center shadow-lg overflow-hidden">
+            <img 
+              src="https://mingwen-cs.github.io/image/logo.png" 
+              alt="ARTS3 Logo" 
+              className="w-full h-full object-contain p-1"
+            />
           </div>
           <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-semibold mb-2">
               ARTS3 研究组
-            </h1>
-            <p className="mt-2 text-base text-sky-300/90 font-mono tracking-wide">
+            </h2>
+            <p className="text-white/70">
               Advanced Research for Trustworthy and Secure Software Systems
             </p>
             <div className="mt-4 h-px bg-gradient-to-r from-white/20 via-white/40 to-transparent" />
@@ -112,9 +116,9 @@ export default function About() {
             </p>
             <p className="mt-3 text-white/75 leading-relaxed">
               展望未来，团队将进一步拓展研究方向至
-              <strong className="text-emerald-300">智能程序生成</strong>、
-              <strong className="text-emerald-300">语言无关的测试模型</strong>与
-              <strong className="text-emerald-300">软件可视化与解释性分析</strong>
+              <strong className="text-emerald-300">JIT/AOT编译器优化机制测试</strong>、
+              <strong className="text-emerald-300">大模型辅助的编译器测试</strong>与
+              <strong className="text-emerald-300">LLVM编译器优化机制测试</strong>
               等前沿领域。 同时，InterFuzz
               计划构建开放、协同的研究平台，促进自动化测试工具、编译器安全与人工智能辅助软件工程的深度融合。
             </p>
