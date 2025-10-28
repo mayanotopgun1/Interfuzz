@@ -18,8 +18,10 @@ export default function Home() {
           </div>
           <h1 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight">InterFuzz</h1>
           <p className="mt-4 md:mt-6 text-base md:text-xl text-white/70 max-w-5xl mx-auto">
-            基于异构程序图的Java优化编译器模糊测试方法,用于验证编译器在处理复杂类间结构时的正确性
-          </p>
+            基于异构程序图的Java优化编译器模糊测试方法，<br />
+            通过生成具有丰富跨类结构的测试用例，<br />
+            验证编译器在处理复杂类间结构时的正确性
+          </p> 
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               to="/demo"
@@ -43,7 +45,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white grid place-items-center mb-3">
                 <GitBranch className="opacity-90" size={22} />
               </div>
-              <h3 className="text-lg font-semibold mb-1">结构建模 · HPG</h3>
+              <h3 className="text-lg font-semibold mb-1">工具介绍 · Introduction</h3>
               <p className="text-white/70">用高层程序图抽象类/接口/方法及其语义关系，统一表达与分析。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
                 了解原理 <ArrowRight size={16} />
@@ -53,7 +55,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white grid place-items-center mb-3">
                 <PlayCircle className="opacity-90" size={22} />
               </div>
-              <h3 className="text-lg font-semibold mb-1">可视交互 · Demo</h3>
+              <h3 className="text-lg font-semibold mb-1">种子生成 · Tool</h3>
               <p className="text-white/70">粘贴/示例 JSON 即刻成图，双图对照与标签距离调节一键掌控。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
                 开始体验 <ArrowRight size={16} />
@@ -63,7 +65,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white grid place-items-center mb-3">
                 <BarChart3 className="opacity-90" size={22} />
               </div>
-              <h3 className="text-lg font-semibold mb-1">研究结果 · 效果</h3>
+              <h3 className="text-lg font-semibold mb-1">研究结果 · Evaluation</h3>
               <p className="text-white/70">统计与案例一目了然，直达发现的编译器问题与复现线索。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
                 查看效果 <ArrowRight size={16} />
