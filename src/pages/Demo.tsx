@@ -387,19 +387,15 @@ export default function Demo() {
     <div className="space-y-3">
       {/* Header */}
       <div className="card">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-1">
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 bg-clip-text text-transparent tracking-wide">{HEADER_TITLE}</h1>
-              <p className="text-sm text-white/55 leading-relaxed">{HEADER_SUBTITLE}</p>
-            </div>
-            <div className="hidden md:flex text-xs text-white/40 flex-col items-end pt-1">
-              <span>Prototype · UI Simulation</span>
-              <span>Academic Alignment</span>
-            </div>
-          </div>
-          <div className="text-xs text-white/50 flex items-start gap-2 bg-white/5 border border-white/10 rounded-xl p-3">
+        <h2 className="text-2xl font-semibold mb-2">{HEADER_TITLE}</h2>
+        <p className="text-white/70">{HEADER_SUBTITLE}</p>
+        <div className="mt-3 flex items-start justify-between gap-4">
+          <div className="text-xs text-white/50 flex items-start gap-2 bg-white/5 border border-white/10 rounded-xl p-3 flex-1">
             <Info size={14} className="mt-0.5 text-sky-300"/> <span>{PIPELINE_DESCRIPTION}</span>
+          </div>
+          <div className="hidden md:flex text-xs text-white/40 flex-col items-end pt-1">
+            <span>Prototype · UI Simulation</span>
+            <span>Academic Alignment</span>
           </div>
         </div>
       </div>
