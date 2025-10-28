@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import * as d3 from 'd3'
 import { GraphJSON, lineStyleToStrokeDasharray, applyZoom } from '../lib/d3Interop'
+import { getNodePalette, normalizeRowType, inferNodeKind, type NodeKind } from '../lib/nodeTypePalette'
 
 interface Props {
   dataUrl: string
@@ -23,6 +24,8 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
   const [reloadTick, setReloadTick] = useState(0)
   // track theme changes to re-render with correct colors
   const [themeTick, setThemeTick] = useState(0)
+  // ensure initial zoom only once per mount
+  const didInitialZoom = useRef(false)
 
   useEffect(() => {
     if (!svgRef.current) return
@@ -89,12 +92,11 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         nodeStroke: isLight ? '#e5e7eb' : 'rgba(255,255,255,0.22)',
         rowDivider: isLight ? '#e5e7eb' : 'rgba(255,255,255,0.12)',
         rowTextDefault: isLight ? '#111827' : '#ffffff',
-        rowTextClass: isLight ? '#0f766e' : '#4FD1C5', // teal-700 vs teal-300
-        rowTextInterface: isLight ? '#0e7490' : '#8adade', // cyan-700 vs light-cyan
         edgeStroke: isLight ? '#94A3B8' : '#E2E8F0', // slate-400 vs gray-200
         edgeLabel: isLight ? '#475569' : '#E5E7EB', // slate-600 vs gray-200
         shadowOpacity: isLight ? 0.12 : 0.35,
       }
+      const palette = getNodePalette(isLight)
       // prepare defs: clear and add arrow marker + node shadow filter for better contrast
       const defs = svg.select('defs')
       defs.selectAll('*').remove()
@@ -117,7 +119,7 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         .attr('stdDeviation', 2)
         .attr('flood-color', '#000')
         .attr('flood-opacity', colors.shadowOpacity)
-      g.selectAll('*').remove()
+  g.selectAll('*').remove()
 
       // defs markers
       const meta = data.meta || {}
@@ -165,8 +167,13 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         .attr('rx', 12)
         .attr('ry', 12)
         .attr('fill', colors.nodeFill)
-        .attr('stroke', colors.nodeStroke)
+        .attr('stroke', (d: any) => {
+          const k = inferNodeKind(d) as NodeKind | undefined
+          return k ? palette[k].accent : colors.nodeStroke
+        })
         .attr('filter', 'url(#nodeShadow)')
+
+      // (corner emblem removed per request)
 
       ;(nodeSel as any).each(function(this: any, d: any) {
         const group = d3.select(this)
@@ -174,15 +181,35 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         const rows = d.rows || []
         rows.forEach((row: any, i: number) => {
           // row background (optional subtle line)
+          const k = normalizeRowType(row.type) as NodeKind | undefined
+          // subtle tinted row background
+          group.append('rect')
+            .attr('x', 0)
+            .attr('y', i * rowH)
+            .attr('width', d.width)
+            .attr('height', rowH)
+            .attr('fill', k ? palette[k].tint : 'transparent')
+          // divider on top of row for structure
           group.append('line')
             .attr('x1', 0).attr('x2', d.width).attr('y1', i * rowH).attr('y2', i * rowH)
             .attr('stroke', colors.rowDivider)
+          // left accent bar
+          if (k) {
+            group.append('rect')
+              .attr('x', 0)
+              .attr('y', i * rowH)
+              .attr('width', 4)
+              .attr('height', rowH)
+              .attr('fill', palette[k].accent)
+              .attr('rx', 2)
+              .attr('ry', 2)
+          }
           const y = i * rowH + rowH / 2
           group.append('text')
             .attr('x', 12)
             .attr('y', y)
             .attr('dominant-baseline', 'middle')
-            .attr('fill', row.type === 'class' ? colors.rowTextClass : row.type === 'interface' ? colors.rowTextInterface : colors.rowTextDefault)
+            .attr('fill', k ? palette[k].text : colors.rowTextDefault)
             .attr('font-size', row.type === 'method' ? 12 : 13)
             .text(row.text)
         })
@@ -225,6 +252,19 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         return defaultIdx
       }
 
+      const edgeKindStyle = (kind: string | undefined) => {
+        if (!kind) return null
+        const k = String(kind).toLowerCase()
+        // theme-aware edge colors
+        const C = (l: string, d: string) => (isLight ? l : d)
+        if (k === 'inheritance') return { stroke: C('#38bdf8', '#bae6fd'), line: 'solid' as const, marker: 'arrow' as const }
+        if (k === 'interface-impl' || k === 'interface_impl' || k === 'implement') return { stroke: C('#a78bfa', '#c4b5fd'), line: 'dashed' as const, marker: 'arrow' as const }
+        if (k === 'nesting') return { stroke: C('#f59e0b', '#fbbf24'), line: 'solid' as const, marker: 'none' as const }
+        if (k === 'generic-bounds' || k === 'generic_bounds') return { stroke: C('#fb7185', '#fca5a5'), line: 'dotted' as const, marker: 'none' as const }
+        if (k === 'reference') return { stroke: C('#22c55e', '#86efac'), line: 'dotted' as const, marker: 'arrow' as const }
+        return null
+      }
+
       const renderEdges = () => {
         edgesG.selectAll('*').remove()
 
@@ -249,8 +289,18 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
           if (!s || !t) continue
           const attachSource = (e.attach?.source as any) || 'classRow'
           const attachTarget = (e.attach?.target as any) || 'classRow'
-          const sIdx = resolveRowIndex(s, attachSource, 'source', e.attach)
-          const tIdx = resolveRowIndex(t, attachTarget, 'target', e.attach)
+          // merge top-level row selectors for simplified schema support
+          const attachMerged = {
+            ...(e as any).attach,
+            sourceRow: (e as any).sourceRow ?? (e as any).attach?.sourceRow,
+            targetRow: (e as any).targetRow ?? (e as any).attach?.targetRow,
+            sourceMethodIndex: (e as any).sourceMethodIndex ?? (e as any).attach?.sourceMethodIndex,
+            targetMethodIndex: (e as any).targetMethodIndex ?? (e as any).attach?.targetMethodIndex,
+            sourceMatch: (e as any).sourceMatch ?? (e as any).attach?.sourceMatch,
+            targetMatch: (e as any).targetMatch ?? (e as any).attach?.targetMatch,
+          }
+          const sIdx = resolveRowIndex(s, attachSource, 'source', attachMerged)
+          const tIdx = resolveRowIndex(t, attachTarget, 'target', attachMerged)
           const sPortY = s.y + (sIdx * s.rowH) + s.rowH / 2
           const tPortY = t.y + (tIdx * t.rowH) + t.rowH / 2
           const p0x = s.x + s.width
@@ -307,13 +357,18 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
           const pts = [p0, { x: midX, y: p0.y }, { x: midX, y: p3.y }, p3]
           const pathD = d3.line<any>().x((pt) => pt.x).y((pt) => pt.y)(pts as any) as string
 
+          const kindSty = edgeKindStyle((e as any).kind)
+          const stroke = kindSty?.stroke || colors.edgeStroke
+          const lineKind = kindSty?.line || e.style?.line
+          const marker = kindSty?.marker || e.style?.marker
+
           edgesG.append('path')
             .attr('d', pathD)
             .attr('fill', 'none')
-            .attr('stroke', colors.edgeStroke)
+            .attr('stroke', stroke)
             .attr('stroke-width', 1.8)
-            .attr('stroke-dasharray', lineStyleToStrokeDasharray(e.style?.line) || null)
-            .attr('marker-end', e.style?.marker === 'arrow' ? 'url(#arrow)' : null)
+            .attr('stroke-dasharray', lineStyleToStrokeDasharray(lineKind) || null)
+            .attr('marker-end', marker === 'arrow' ? 'url(#arrow)' : null)
 
           if (e.label) {
             const fixedDist = ((e as any).labelDistanceFromSource ?? labelDistance ?? meta.layout?.labelDistanceFromSource ?? 30) as number
@@ -373,6 +428,15 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
       const bbox = (g.node() as SVGGElement).getBBox()
       const pad = 40
       svg.attr('viewBox', `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`)
+
+      // (legend drawing removed here; using HTML GraphLegend overlay instead)
+
+      // apply an initial zoom-in roughly equal to three wheel "up" steps
+      if (!didInitialZoom.current && zoomCtl.current) {
+        // use a single scaleBy with factor ~ 1.2^3 to avoid transition interruptions
+        zoomCtl.current.scaleBy(Math.pow(1.2, 3))
+        didInitialZoom.current = true
+      }
 
       return layoutMs
     }
