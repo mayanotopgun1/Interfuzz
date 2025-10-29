@@ -52,7 +52,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white grid place-items-center mb-3">
                 <PlayCircle className="opacity-90" size={22} />
               </div>
-              <h3 className="text-xl font-semibold mb-1">种子生成 · Tool</h3>
+              <h3 className="text-xl font-semibold mb-1">工具使用 · Tool</h3>
               <p className="text-white/70 text-base">粘贴/示例 JSON 即刻成图，双图对照与标签距离调节一键掌控。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
                 开始体验 <ArrowRight size={16} />

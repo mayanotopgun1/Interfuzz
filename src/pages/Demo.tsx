@@ -56,12 +56,14 @@ export default function Demo() {
     nodeKindCounts: Record<string, number> // 节点级 (class/interface 节点数量, 其他按行补齐)
     edgeKindCounts: Record<string, number>
     methodRowsPerNode: Record<string, number>
+    fieldRowsPerNode: Record<string, number>
   }
   interface GraphDiff {
     nodeKindDelta: Record<string, number>
     edgeKindDelta: Record<string, number>
     addedNodes: Array<{ id: string; kind: string }>
     addedMethodRows: Array<{ nodeId: string; count: number }>
+    addedFieldRows: Array<{ nodeId: string; count: number }>
     addedEdges: Array<{ id: string; kind: string }>
   }
   const [seedGraphSummary, setSeedGraphSummary] = useState<GraphSummary | null>(null)
@@ -102,11 +104,14 @@ export default function Demo() {
     tagIdle: isLight ? 'text-slate-500' : 'text-white/45'
   }
 
-  function normalizeEdgeKind(k?: string): string {
-    if (!k) return 'unknown'
-    const v = k.toLowerCase()
-    if (v === 'interface_impl' || v === 'implement' || v === 'interface-impl') return 'interface-impl'
+  function normalizeEdgeKind(k?: string, semantics?: string): string {
+    let raw = k || semantics || ''
+    if (!raw) return 'reference' // 默认回落为 reference，避免 unknown
+    const v = raw.toLowerCase()
+    if (v === 'interface_impl' || v === 'implement' || v === 'implements' || v === 'implementation' || v === 'interface-impl') return 'interface-impl'
     if (v === 'generic_bounds' || v === 'generic-bounds') return 'generic-bounds'
+    if (v === 'instantiate' || v === 'instantiation' || v === 'object creation') return 'reference'
+    if (v === 'extend' || v === 'inherit' || v === 'inheritance' || v === 'extension') return 'inheritance'
     return v
   }
   const EDGE_BASE = ['reference','interface-impl','inheritance','nesting','generic-bounds']
@@ -117,6 +122,7 @@ export default function Demo() {
     const nodeKindCounts: Record<string, number> = {}
     const edgeKindCounts: Record<string, number> = {}
     const methodRowsPerNode: Record<string, number> = {}
+    const fieldRowsPerNode: Record<string, number> = {}
     ROW_BASE.forEach(r => { rowCounts[r] = 0 })
     EDGE_BASE.forEach(e => { edgeKindCounts[e] = 0 })
 
@@ -128,17 +134,18 @@ export default function Demo() {
         if (ROW_BASE.includes(t)) rowCounts[t] = (rowCounts[t] || 0) + 1
         if ((t === 'class' || t === 'interface') && nodeKind === 'unknown') nodeKind = t
         if (t === 'method') methodRowsPerNode[n.id] = (methodRowsPerNode[n.id] || 0) + 1
+        if (t === 'field') fieldRowsPerNode[n.id] = (fieldRowsPerNode[n.id] || 0) + 1
       }
       nodeKindCounts[nodeKind] = (nodeKindCounts[nodeKind] || 0) + 1
     })
     g.edges.forEach(e => {
-      const k = normalizeEdgeKind(e.kind)
+      const k = normalizeEdgeKind(e.kind, (e as any).semantics)
       if (EDGE_BASE.includes(k)) edgeKindCounts[k] = (edgeKindCounts[k] || 0) + 1
     })
     // ensure keys present
     ROW_BASE.forEach(r => { if (!(r in rowCounts)) rowCounts[r] = 0 })
     EDGE_BASE.forEach(e => { if (!(e in edgeKindCounts)) edgeKindCounts[e] = 0 })
-    return { rowCounts, nodeKindCounts, edgeKindCounts, methodRowsPerNode }
+    return { rowCounts, nodeKindCounts, edgeKindCounts, methodRowsPerNode, fieldRowsPerNode }
   }
 
   function diffGraphs(seed: GraphData, mutated: GraphData): GraphDiff {
@@ -154,16 +161,20 @@ export default function Demo() {
       return { id: n.id, kind: firstRow }
     })
     const addedMethodRows: Array<{ nodeId: string; count: number }> = []
+    const addedFieldRows: Array<{ nodeId: string; count: number }> = []
     mutated.nodes.forEach(n => {
       const mCount = m.methodRowsPerNode[n.id]||0
       const sCount = s.methodRowsPerNode[n.id]||0
       if (mCount > sCount) addedMethodRows.push({ nodeId: n.id, count: mCount - sCount })
+      const mfCount = m.fieldRowsPerNode[n.id]||0
+      const sfCount = s.fieldRowsPerNode[n.id]||0
+      if (mfCount > sfCount) addedFieldRows.push({ nodeId: n.id, count: mfCount - sfCount })
     })
     const seedEdgeIds = new Set<string>(seed.edges.map(e=>e.id))
-    const addedEdges: Array<{ id: string; kind: string }> = mutated.edges.filter(e=>!seedEdgeIds.has(e.id)).map(e => ({ id: e.id, kind: normalizeEdgeKind(e.kind) }))
+    const addedEdges: Array<{ id: string; kind: string }> = mutated.edges.filter(e=>!seedEdgeIds.has(e.id)).map(e => ({ id: e.id, kind: normalizeEdgeKind(e.kind, (e as any).semantics) }))
     setSeedGraphSummary(s)
     setMutGraphSummary(m)
-    return { nodeKindDelta, edgeKindDelta, addedNodes, addedMethodRows, addedEdges }
+    return { nodeKindDelta, edgeKindDelta, addedNodes, addedMethodRows, addedFieldRows, addedEdges }
   }
 
   // Fetch & summarize when URLs become available
@@ -204,8 +215,7 @@ export default function Demo() {
       graphDiff.edgeKindDelta['inheritance'] > 0
     )
     if (structuralComplex) s.push('更复杂的类间结构')
-    if (graphDiff.edgeKindDelta['interface-impl'] > 0) s.push('实现关系增长：动态分派机会增加')
-    if (graphDiff.edgeKindDelta['reference'] > 1) s.push('引用边显著增长：对象交互路径增多')
+    // 已移除“实现关系增长：动态分派机会增加”与“引用边显著增长：对象交互路径增多”提示
     if (graphDiff.edgeKindDelta['generic-bounds'] > 0) s.push('出现泛型约束：类型系统覆盖增强')
     if (graphDiff.edgeKindDelta['nesting'] > 0) s.push('出现嵌套：内部类/作用域结构更丰富')
     if (s.length === 0) s.push('结构变化较小，可考虑引入新的接口或继承层次')
@@ -255,10 +265,10 @@ export default function Demo() {
     setAnalysisDone(false)
     setCurrentStep(-1)
     setMutatedCode('')
-    setLeftDataUrl(null)
-    setRightDataUrl(null)
-    setLeftSource('')
-    setRightSource('')
+  setLeftDataUrl(null)
+  setRightDataUrl(null)
+  setLeftSource('')
+  setRightSource('')
     // 清空结构统计与差异，以确保重新运行时右上角组件刷新
     setSeedGraphSummary(null)
     setMutGraphSummary(null)
@@ -384,17 +394,13 @@ export default function Demo() {
     setCompareMode(false)
     setCompareJustActivated(false)
     setError(null)
-    setShowSeedPicker(false)
-    setTimeout(() => { previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, 60)
   }
-
-  // 原手动 JSON 模式逻辑已移除
-
+  
   return (
     <div className="space-y-3">
       {/* 页面标题 */}
       <div className="mb-8">
-        <h1 className="text-5xl font-bold text-white mb-2">种子生成</h1>
+  <h1 className="text-5xl font-bold text-white mb-2">工具使用</h1>
         <p className="text-white/60 text-base">InterFuzz 测试用例生成与可视化演示</p>
       </div>
 
@@ -421,10 +427,22 @@ export default function Demo() {
               <h3 className="font-semibold text-white flex items-center gap-2"><PlayCircle size={18} className="text-sky-400"/>分析—变异流水线</h3>
               <button
                 className="btn-primary disabled:opacity-50"
-                disabled={analysisRunning}
-                onClick={startAutoDemo}
+                disabled={analysisRunning || analysisDone || !selectedFile}
+                onClick={() => {
+                  if (!selectedFile) { setError('请先选择预选 Seed 后再开始分析'); return }
+                  if (analysisDone) { setError('分析已完成，如需再次执行请点击重新运行'); return }
+                  startAutoDemo()
+                }}
                 aria-label="开始分析"
-              >{analysisRunning ? (<><Loader2 size={16} className="animate-spin"/> 运行中...</>) : '开始分析'}</button>
+              >{
+                analysisRunning
+                  ? (<><Loader2 size={16} className="animate-spin"/> 运行中...</>)
+                  : analysisDone
+                    ? '分析已完成'
+                    : !selectedFile
+                      ? '请选择 Seed'
+                      : '开始分析'
+              }</button>
             </div>
             {/* 固定真实图数据集提示 */}
             <div className="text-sm text-white/50 flex items-center gap-2">
@@ -479,11 +497,19 @@ export default function Demo() {
                       setSeedGraphSummary(null); setMutGraphSummary(null); setGraphDiff(null); setCompareMode(false); setCompareJustActivated(false)
                       if (outputJavaBlobUrl) { URL.revokeObjectURL(outputJavaBlobUrl); setOutputJavaBlobUrl(null) }
                     }}>移除文件</button>
-                  <button
-                    className="btn text-sm px-2 py-1"
-                    disabled={analysisRunning}
-                    onClick={() => { setAnalysisDone(false); setCurrentStep(-1); setMutatedCode(''); if (outputJavaBlobUrl) { URL.revokeObjectURL(outputJavaBlobUrl); setOutputJavaBlobUrl(null) } startAutoDemo() }}
-                  >重新运行</button>
+                  {analysisDone && (
+                    <button
+                      className="btn text-sm px-2 py-1"
+                      disabled={analysisRunning}
+                      onClick={() => {
+                        setAnalysisDone(false)
+                        setCurrentStep(-1)
+                        setMutatedCode('')
+                        if (outputJavaBlobUrl) { URL.revokeObjectURL(outputJavaBlobUrl); setOutputJavaBlobUrl(null) }
+                        startAutoDemo()
+                      }}
+                    >重新运行</button>
+                  )}
                 </>
               )}
             </div>
@@ -857,7 +883,7 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
       
     } catch (e: any) {
       console.error('生成种子失败:', e)
-      setError('种子生成失败: ' + (e?.message || '未知错误'))
+  setError('测试用例生成失败: ' + (e?.message || '未知错误'))
       setAcquiring(false)
       setGenerationProgress(0)
       setEstimatedTimeRemaining(null)
@@ -979,14 +1005,14 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
             <Download size={24} />
           </div>
           <div className="flex flex-col">
-            <div className="text-xl md:text-2xl font-semibold tracking-wide text-emerald-200 leading-tight">种子生成</div>
+            <div className="text-xl md:text-2xl font-semibold tracking-wide text-emerald-200 leading-tight">工具使用</div>
             <div className="text-xs md:text-sm text-white/65 mt-0.5">批量测试用例生成 · 支持单独/批量ZIP下载</div>
           </div>
         </div>
         <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.35),transparent_70%)]" />
       </div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-white">测试用例生成</h3>
+  <h3 className="font-semibold text-white">工具使用 · 测试用例生成</h3>
         <div className="flex items-center gap-2 text-sm text-white/70">
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">测试用例: <span className="text-white">{count}</span></span>
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">迭代: <span className="text-white">{iterations}</span></span>
@@ -1178,6 +1204,7 @@ type GraphDiffLocal = {
   edgeKindDelta: Record<string, number>
   addedNodes: Array<{ id: string; kind: string }>
   addedMethodRows: Array<{ nodeId: string; count: number }>
+  addedFieldRows: Array<{ nodeId: string; count: number }>
   addedEdges: Array<{ id: string; kind: string }>
 }
 interface DiffSummaryAggregatedProps { graphDiff: GraphDiffLocal | null; tone: any }
@@ -1189,11 +1216,13 @@ function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) 
   const nodeKindsAgg: Record<string, number> = {}
   graphDiff.addedNodes.forEach((n: { id: string; kind: string }) => { nodeKindsAgg[n.kind] = (nodeKindsAgg[n.kind] || 0) + 1 })
   const totalAddedMethods = graphDiff.addedMethodRows.reduce((a: number,b: { nodeId: string; count: number })=>a + b.count,0)
+  const totalAddedFields = graphDiff.addedFieldRows.reduce((a: number,b: { nodeId: string; count: number })=>a + b.count,0)
   const edgeKindsAgg: Record<string, number> = {}
   graphDiff.addedEdges.forEach((e: { id: string; kind: string }) => { edgeKindsAgg[e.kind] = (edgeKindsAgg[e.kind] || 0) + 1 })
   const badges: Array<{ label: string; value: number; color: string }> = []
   Object.entries(nodeKindsAgg).forEach(([k,v]) => badges.push({ label: `节点:${k}`, value: v, color: 'emerald' }))
   if (totalAddedMethods > 0) badges.push({ label: '方法行', value: totalAddedMethods, color: 'cyan' })
+  if (totalAddedFields > 0) badges.push({ label: '字段行', value: totalAddedFields, color: 'amber' })
   Object.entries(edgeKindsAgg).forEach(([k,v]) => badges.push({ label: `边:${k}`, value: v, color: 'purple' }))
   if (badges.length === 0) return <div className="text-sm px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white/50 inline-block">暂无新增结构</div>
 
@@ -1201,6 +1230,7 @@ function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) 
     switch (c) {
       case 'emerald': return 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
       case 'cyan': return 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
+      case 'amber': return 'bg-amber-500/15 border-amber-400/30 text-amber-300'
       case 'purple': return 'bg-purple-500/15 border-purple-400/30 text-purple-300'
       default: return 'bg-white/10 border-white/15 text-white/60'
     }
@@ -1221,7 +1251,6 @@ function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) 
               <h4 className="text-sm font-semibold text-white/80">新增结构详情</h4>
               <button type="button" onClick={()=>setOpen(false)} className="text-sm px-2 py-1 rounded-md bg-white/10 text-white/70 hover:text-white">关闭</button>
             </div>
-            <div className="text-[10px] text-white/50">按种类聚合显示所有新增节点、方法行和边。原始 ID 列表用于深入分析。</div>
             <div className="max-h-[260px] overflow-auto space-y-2 pr-1">
               <div>
                 <div className="text-sm font-medium text-emerald-300 mb-1">新增节点列表</div>
@@ -1235,6 +1264,13 @@ function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) 
                 <div className="flex flex-wrap gap-1">
                   {graphDiff.addedMethodRows.map((m: { nodeId: string; count: number }) => <span key={m.nodeId} className="px-1.5 py-0.5 rounded bg-cyan-500/15 text-[10px] border border-cyan-400/30 text-cyan-200">{m.nodeId} ×{m.count}</span>)}
                   {graphDiff.addedMethodRows.length===0 && <span className="text-[10px] text-white/40">无</span>}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-amber-300 mb-1">新增字段行 (按节点)</div>
+                <div className="flex flex-wrap gap-1">
+                  {graphDiff.addedFieldRows.map((f: { nodeId: string; count: number }) => <span key={f.nodeId} className="px-1.5 py-0.5 rounded bg-amber-500/15 text-[10px] border border-amber-400/30 text-amber-200">{f.nodeId} ×{f.count}</span>)}
+                  {graphDiff.addedFieldRows.length===0 && <span className="text-[10px] text-white/40">无</span>}
                 </div>
               </div>
               <div>
