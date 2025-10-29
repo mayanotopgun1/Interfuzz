@@ -2,11 +2,12 @@
   "meta": {
     "title": "Code Structure Diagram",
     "layout": {
-      "mode": "absolute",
-      "colGap": 310,
-      "rowGap": 220,
-      "nodeSpacing": "adaptive",
-      "edgeRouting": "curved",
+      "mode": "grid",
+      "colGap": 170,
+      "rowGap": 160,
+      "c0ExtendLong": 130,
+      "c0ExtendShort": 100,
+      "labelDistanceFromSource": 80,
       "computed": {
         "colOrder": [
           0,

@@ -72,13 +72,68 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
 
     fetch(dataUrl)
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
-      .then(async (data: GraphJSON) => {
+      .then(async (raw: GraphJSON) => {
         if (cancelled) return
+        const data = normalizeGraph(raw)
         const layoutMs = await draw(data)
         if (onLoaded) onLoaded({ nodes: data.nodes.length, edges: data.edges.length, layoutMs })
       })
       .catch((e) => !cancelled && setError(String(e)))
     return () => { cancelled = true }
+
+    /**
+     * 将后端 / 旧版本生成的 output.json 适配为前端当前绘图期望的结构：
+     * 1. 把 edge.semantics (implement / instantiate 等) 映射为 edge.kind
+     * 2. 如果存在 legacy 的 style.routing / style.points 等非必须字段，保留但前端忽略
+     * 3. 若没有 style.marker 且推断需要箭头，则补 marker: 'arrow'
+     * 4. 若没有 style.line，根据 kind 给予默认 line (inheritance/impl = solid/dashed, reference = dotted)
+     */
+    function normalizeGraph(g: GraphJSON): GraphJSON {
+      const semanticsToKind: Record<string, string> = {
+        implement: 'interface-impl',
+        implements: 'interface-impl',
+        implementation: 'interface-impl',
+        instantiate: 'reference', // 与 seed.json 中 Object Instantiation 统一为 reference (绿色虚线)
+        instantiation: 'reference',
+        reference: 'reference',
+        inherit: 'inheritance',
+        inheritance: 'inheritance',
+        extend: 'inheritance',
+        extension: 'inheritance',
+      }
+      const needArrowKinds = new Set(['interface-impl', 'inheritance', 'reference'])
+      const defaultLineByKind: Record<string, 'solid' | 'dashed' | 'dotted'> = {
+        'inheritance': 'solid',
+        'interface-impl': 'dashed',
+        'reference': 'dotted',
+      }
+      // 深拷贝 edges（nodes 通常已满足结构，不做额外处理）
+      const edges = g.edges.map((e: any) => {
+        const out = { ...e }
+        if (!out.kind) {
+          const k = semanticsToKind[String(out.semantics || '').toLowerCase()]
+          if (k) out.kind = k
+        }
+        // style 归一化
+        out.style = { ...(out.style || {}) }
+        if (!out.style.marker && out.kind && needArrowKinds.has(out.kind)) {
+          out.style.marker = 'arrow'
+        }
+        if (!out.style.line && out.kind && defaultLineByKind[out.kind]) {
+          out.style.line = defaultLineByKind[out.kind]
+        }
+        // 兼容旧的 sourceRow/targetRow 顶层字段（如果后端未来直接放在边对象顶层）—— GraphViewer 内部已做处理，这里无需重复，但可以统一 attach
+        if ((out as any).sourceRow || (out as any).targetRow || (out as any).sourceMethodIndex || (out as any).targetMethodIndex) {
+          out.attach = { ...(out.attach || {}) }
+          if ((out as any).sourceRow && out.attach.sourceRow == null) out.attach.sourceRow = (out as any).sourceRow
+          if ((out as any).targetRow && out.attach.targetRow == null) out.attach.targetRow = (out as any).targetRow
+          if ((out as any).sourceMethodIndex != null && out.attach.sourceMethodIndex == null) out.attach.sourceMethodIndex = (out as any).sourceMethodIndex
+          if ((out as any).targetMethodIndex != null && out.attach.targetMethodIndex == null) out.attach.targetMethodIndex = (out as any).targetMethodIndex
+        }
+        return out
+      })
+      return { ...g, edges }
+    }
 
     async function draw(data: GraphJSON) {
   if (!svgRef.current) return 0
@@ -205,13 +260,22 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
               .attr('ry', 2)
           }
           const y = i * rowH + rowH / 2
-          group.append('text')
+          // 文本截断与悬停显示
+          const fullText: string = String(row.text || '')
+          const maxChars = Math.round((d.width - 28) / 7) // 粗略按字符宽估计
+          const truncated = fullText.length > maxChars ? fullText.slice(0, maxChars - 1) + '…' : fullText
+          const textEl = group.append('text')
             .attr('x', 12)
             .attr('y', y)
             .attr('dominant-baseline', 'middle')
             .attr('fill', k ? palette[k].text : colors.rowTextDefault)
             .attr('font-size', row.type === 'method' ? 12 : 13)
-            .text(row.text)
+            .text(truncated)
+          if (truncated !== fullText) {
+            textEl.attr('data-full', fullText)
+              .attr('cursor','help')
+              .append('title').text(fullText)
+          }
         })
       })
 
@@ -411,6 +475,46 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
       }
 
       renderEdges()
+
+      // 延迟悬停 tooltip（自定义浮层，仅针对截断文本）
+      const tooltip = d3.select(svg.node()!.parentElement)
+        .append('div')
+        .attr('class','graph-tooltip')
+        .style('position','fixed')
+        .style('pointer-events','none')
+        .style('z-index','60')
+        .style('background', isLight ? 'rgba(255,255,255,0.95)' : 'rgba(17,24,39,0.92)')
+        .style('color', isLight ? '#0f172a' : '#f1f5f9')
+        .style('font-size','11px')
+        .style('padding','6px 8px')
+        .style('border-radius','6px')
+        .style('border', isLight ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.15)')
+        .style('box-shadow', isLight ? '0 4px 12px rgba(0,0,0,0.08)' : '0 4px 12px rgba(0,0,0,0.45)')
+        .style('opacity','0')
+      let hoverTimer: any = null
+      svg.selectAll('text[data-full]')
+        .on('mouseenter', function(event){
+          const target = d3.select(this)
+          const full = target.attr('data-full')
+          if (!full) return
+          if (hoverTimer) clearTimeout(hoverTimer)
+          const { clientX, clientY } = event
+          hoverTimer = setTimeout(()=>{
+            tooltip.style('left', (clientX + 12) + 'px')
+              .style('top', (clientY + 12) + 'px')
+              .style('opacity','1')
+              .text(full)
+          }, 520) // 延迟 ~520ms
+        })
+        .on('mousemove', function(event){
+          if (tooltip.style('opacity') === '1') {
+            tooltip.style('left', (event.clientX + 12) + 'px').style('top', (event.clientY + 12) + 'px')
+          }
+        })
+        .on('mouseleave', function(){
+          if (hoverTimer) clearTimeout(hoverTimer)
+          tooltip.style('opacity','0')
+        })
 
       // drag behavior for nodes: update position and redraw edges
       const dragBehavior = d3.drag<SVGGElement, any>()

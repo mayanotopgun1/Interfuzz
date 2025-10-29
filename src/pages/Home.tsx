@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, PlayCircle, BookOpen, BarChart3, GitBranch, ScrollText, Sparkles, Network, Workflow, TrendingUp } from 'lucide-react'
+import { ArrowRight, PlayCircle, BookOpen, BarChart3, GitBranch, ScrollText, Sparkles } from 'lucide-react'
 
 export default function Home() {
   const nav = useNavigate()
@@ -14,7 +14,7 @@ export default function Home() {
 
   <div className="relative px-6 py-14 md:px-10 md:py-20 text-center">
           <div className="inline-flex">
-            {/* <span className="badge">Fuzzing Java Optimizing Compilers with Complex Inter-Class Structures Guided by Heterogeneous Program Graphs</span> */}
+            <span className="badge">Fuzzing Java optimizing compilers</span>
           </div>
           <h1 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight">InterFuzz</h1>
           <p className="mt-4 md:mt-6 text-base md:text-xl text-white/70 max-w-5xl mx-auto">
@@ -154,32 +154,24 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-3">
               {[
                 { 
-                  title: '核心 1：HPG 异构程序图',
-                  icon: Network,
+                  title: '🔷 核心 1：HPG 异构程序图', 
                   desc: '将程序抽象为多类型有向图 HPG(𝒫) = (V, 𝒯, E, ℰ)，统一表示继承、接口、嵌套、泛型、引用等五种类间结构，支持结构化分析与操作。',
                   highlight: true
                 },
                 { 
-                  title: '核心 2：跨类结构变异算子',
-                  icon: Workflow,
+                  title: '🔶 核心 2：跨类结构变异算子', 
                   desc: '在 HPG 上执行图级原子操作（添加/删除节点或边、修改属性），系统化生成具有复杂类间关系的测试用例，保证语法与语义正确性。',
                   highlight: true
                 },
                 { 
-                  title: '核心 3：图复杂度引导',
-                  icon: TrendingUp,
+                  title: '🔸 核心 3：图复杂度引导', 
                   desc: '基于节点度数与边类型多样性评估结构复杂度，引导变异过程优先探索"关系多样且连接丰富"的程序形态，高效触发编译器缺陷。',
                   highlight: true
                 },
               ].map((it, i) => (
                 <div key={i} className="card group transition duration-300 hover:-translate-y-1 hover:bg-gradient-to-br hover:from-sky-500/10 hover:to-purple-500/10 hover:shadow-xl border-2 border-sky-500/30 hover:border-sky-400/50">
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-sky-500/20 grid place-items-center">
-                        <it.icon size={18} className="text-sky-300" />
-                      </div>
-                      <h3 className="font-semibold text-white">{it.title}</h3>
-                    </div>
+                    <h3 className="font-semibold text-white">{it.title}</h3>
                   </div>
                   <p className="text-white/80 text-sm leading-relaxed">{it.desc}</p>
                 </div>
@@ -209,3 +201,4 @@ export default function Home() {
     </div>
   )
 }
+
