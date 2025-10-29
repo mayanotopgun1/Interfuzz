@@ -234,7 +234,7 @@ export default function Demo() {
   }, [rightDataUrl, leftDataUrl])
 
   function buildGraphSuggestions(): string[] {
-    if (!graphDiff) return ['等待加载图数据以生成建议']
+  if (!graphDiff) return ['等待加载图数据以生成建议']
     const s: string[] = []
     // 聚合结构复杂度提升相关触发条件为单条建议
     const structuralComplex = (
@@ -446,14 +446,14 @@ export default function Demo() {
   {mode !== 'batch' && mode !== 'overview' && (
   <div className="card" id="pipeline-section">
         {/* 模块醒目头部 */}
-  <div className="relative mb-4 overflow-hidden rounded-xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/25 via-sky-500/20 to-emerald-500/25 px-5 py-4 flex items-center justify-between">
+  <div className="relative mb-4 overflow-hidden rounded-xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/25 via-sky-500/20 to-emerald-500/25 px-5 py-4 flex items-center justify-between theme-light:border-sky-300/40 theme-light:from-sky-300/25 theme-light:via-cyan-300/15 theme-light:to-emerald-300/20">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-cyan-400 to-sky-500 text-white flex items-center justify-center shadow-inner">
               <PlayCircle size={24} />
             </div>
             <div className="flex flex-col">
-              <div className="text-xl md:text-2xl font-semibold tracking-wide text-cyan-200 leading-tight">分析—变异流水线</div>
-              <div className="text-sm md:text-base text-white/65 mt-0.5">结构 → 初始HPG → 变异 → 变异后HPG → 测试程序</div>
+              <div className="text-xl md:text-2xl font-semibold tracking-wide text-cyan-200 leading-tight theme-light:text-slate-900">分析—变异流水线</div>
+              <div className="text-sm md:text-base text-white/65 mt-0.5 theme-light:text-slate-900">结构 → 初始HPG → 变异 → 变异后HPG → 测试程序</div>
             </div>
           </div>
           <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_85%_15%,rgba(255,255,255,0.35),transparent_70%)]" />
@@ -462,7 +462,7 @@ export default function Demo() {
           {/* 左：控制 + 预览双栈 */}
           <div className="flex-[1.15] space-y-4" ref={leftColumnRef}>
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-white flex items-center gap-2"><PlayCircle size={18} className="text-sky-400"/>分析—变异流水线</h3>
+              <h3 className="font-semibold text-white flex items-center gap-2 theme-light:text-slate-900"><PlayCircle size={18} className="text-sky-400 theme-light:text-sky-600"/>分析—变异流水线</h3>
               <button
                 className="btn-primary disabled:opacity-50"
                 disabled={analysisRunning || analysisDone || !selectedFile}
@@ -565,7 +565,7 @@ export default function Demo() {
                   <CodePreview code={selectedFileContent} language="java" filename={selectedFile?.name || 'Seed.java'} maxHeight={260} />
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-sm text-white/45">
+                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-sm text-white/45 theme-light:text-slate-900 theme-light:bg-slate-100/60 theme-light:border-slate-300/60">
                   选择或导入 Seed 后显示源码
                 </div>
               )}
@@ -596,7 +596,7 @@ export default function Demo() {
                   />
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-sm text-white/45 min-h-[140px] flex items-center justify-center">
+                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-sm text-white/45 min-h-[140px] flex items-center justify-center theme-light:text-slate-900 theme-light:bg-slate-100/55 theme-light:border-slate-300/60">
                   等待流程生成测试程序…
                 </div>
               )}
@@ -661,8 +661,8 @@ export default function Demo() {
                     <DiffSummaryAggregated graphDiff={graphDiff} tone={tone} />
                     <div className={`mt-2 text-sm italic flex items-center gap-1 ${tone.caption}`}><Sparkles size={12} className="text-yellow-500"/>基于行(row)统计：方法/字段作为行计数，节点按首行类型分类。</div>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {graphSuggestions.map((sg,i)=>(
-                        <span key={i} className="px-2 py-0.5 rounded-full bg-white/8 border border-white/10 text-sm text-white/65 backdrop-blur-sm">{sg}</span>
+                      {graphSuggestions.map((sg,i)=> (
+                        <span key={i} className="px-2 py-0.5 rounded-full bg-white/8 border border-white/10 text-sm text-white/65 backdrop-blur-sm theme-light:text-slate-900">{sg}</span>
                       ))}
                     </div>
                   </div>
@@ -1050,14 +1050,14 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
   return (
   <div className="card" id="seed-section">
       {/* 模块醒目头部 */}
-  <div className="relative mb-4 overflow-hidden rounded-xl border border-emerald-400/30 bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-cyan-500/25 px-5 py-4 flex items-center justify-between">
+  <div className="relative mb-4 overflow-hidden rounded-xl border border-emerald-400/30 bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-cyan-500/25 px-5 py-4 flex items-center justify-between theme-light:border-emerald-400/40 theme-light:from-emerald-300/25 theme-light:via-teal-300/15 theme-light:to-cyan-300/20">
         <div className="flex items-center gap-3">
           <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center shadow-inner">
             <Download size={24} />
           </div>
           <div className="flex flex-col">
-            <div className="text-xl md:text-2xl font-semibold tracking-wide text-emerald-200 leading-tight">多种子批量生成</div>
-            <div className="text-xs md:text-sm text-white/65 mt-0.5">按配置批量生成测试用例集合 · 支持单例与总包打包</div>
+            <div className="text-xl md:text-2xl font-semibold tracking-wide text-emerald-200 leading-tight theme-light:text-slate-900">多种子批量生成</div>
+            <div className="text-xs md:text-sm text-white/65 mt-0.5 theme-light:text-slate-900">按配置批量生成测试用例集合 · 支持单例与总包打包</div>
           </div>
         </div>
         <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.35),transparent_70%)]" />
