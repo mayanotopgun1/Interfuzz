@@ -5,7 +5,7 @@ export default function About() {
     <div className="container mx-auto px-4 py-8">
       {/* 页面标题 */}
       <div className="mb-8">
-        <h1 className="text-5xl font-bold text-white mb-2">关于我们</h1>
+        <h1 className="text-4xl font-bold text-white mb-2">关于我们</h1>
         <p className="text-white/60 text-base">团队介绍与研究方向</p>
       </div>
 
@@ -17,7 +17,7 @@ export default function About() {
             <Users size={26} className="text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="text-3xl font-semibold text-white mb-4">研究团队</h2>
+            <h2 className="text-2xl font-semibold text-white mb-4">研究团队</h2>
           </div>
         </div>
 
@@ -129,8 +129,8 @@ export default function About() {
             <Building2 size={26} className="text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="text-3xl font-semibold text-white mb-2">ARTS3 研究组</h2>
-            <p className="text-white/90 leading-relaxed">
+            <h2 className="text-2xl font-semibold text-white mb-2">ARTS3 研究组</h2>
+            <p className="text-white/90 text-base leading-relaxed">
               <strong className="text-white">ARTS3 研究组</strong>
               （Advanced Research for Trustworthy and Secure Software Systems）
               隶属于
@@ -140,7 +140,7 @@ export default function About() {
               ，由<strong className="text-white">文明副教授</strong>指导。
               实验室专注于可信与安全软件系统的基础与应用研究，旨在探索构建高可靠、高安全性软件系统的新方法与新技术。
             </p>
-            <p className="mt-3 text-white/80 leading-relaxed">
+            <p className="mt-3 text-white/80 text-base leading-relaxed">
               研究方向涵盖软件安全、软件测试与分析、代码大模型等领域，
               聚焦于模糊测试、静态与动态分析、软件供应链安全，以及智能化软件工程技术。
               <strong className="text-white">InterFuzz</strong>是实验室在编译器测试领域的重要研究成果，
@@ -175,8 +175,8 @@ export default function About() {
               <Building2 size={26} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-semibold text-white mb-3">集群与网格计算湖北省重点实验室</h2>
-              <p className="text-white/80 leading-relaxed text-sm">
+              <h2 className="text-2xl font-semibold text-white mb-3">集群与网格计算湖北省重点实验室</h2>
+              <p className="text-white/80 text-base leading-relaxed">
                 华中科技大学"服务计算技术与系统教育部重点实验室"暨"集群与网格计算湖北省重点实验室"依托于计算机系统结构国家重点学科，拥有自由开放的学术氛围和国际前沿的研究方向。实验室致力于系统软件与体系结构、分布式系统、网络空间安全、大数据等领域的研究与创新，在分布式计算、云计算、大数据处理等方向具有丰富的理论积累与工程实践经验。
               </p>
             </div>
@@ -190,8 +190,8 @@ export default function About() {
               <Building2 size={26} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-semibold text-white mb-3">分布式系统安全湖北省重点实验室</h2>
-              <p className="text-white/80 leading-relaxed text-sm">
+              <h2 className="text-2xl font-semibold text-white mb-3">分布式系统安全湖北省重点实验室</h2>
+              <p className="text-white/80 text-base leading-relaxed">
                 华中科技大学分布式系统实验室致力于分布式计算、分布式存储、分布式系统架构等前沿技术的研究与创新。实验室在分布式系统设计、容错机制、一致性协议、分布式调度等方向具有丰富的理论积累与工程实践经验。
               </p>
             </div>
