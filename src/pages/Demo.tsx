@@ -757,8 +757,8 @@ interface AcquireSeedsProps {
 }
 
 function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps) {
-  const [count, setCount] = useState<number>(3)
-  const [iterations, setIterations] = useState<number>(100)
+  const [count, setCount] = useState<number>(50)
+  const [iterations, setIterations] = useState<number>(20)
   const [acquiring, setAcquiring] = useState(false)
   const [items, setItems] = useState<Array<{ name: string; url: string; size: number }>>([])
   const [zipBuilding, setZipBuilding] = useState(false)
@@ -766,38 +766,182 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
   const [zipUrl, setZipUrl] = useState<string | null>(null)
   const [zipJustBuilt, setZipJustBuilt] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [generationProgress, setGenerationProgress] = useState(0)
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number | null>(null)
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // 清理单独创建的 blob (ZIP) URL
   useEffect(() => {
     return () => {
       if (zipUrl) URL.revokeObjectURL(zipUrl)
+      if (progressTimerRef.current) clearInterval(progressTimerRef.current)
     }
   }, [zipUrl])
+
+  // 格式化剩余时间
+  function formatTimeRemaining(seconds: number): string {
+    if (seconds < 60) return `${Math.ceil(seconds)}秒`
+    const minutes = Math.floor(seconds / 60)
+    const secs = Math.ceil(seconds % 60)
+    return `${minutes}分${secs}秒`
+  }
 
   async function acquire() {
     if (acquiring) return
     setAcquiring(true)
     setError(null)
+    setGenerationProgress(0)
+    setEstimatedTimeRemaining(null)
+    
+    // 清理旧的进度定时器
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current)
+      progressTimerRef.current = null
+    }
+    
     // 清理旧 item urls
     items.forEach(it => URL.revokeObjectURL(it.url))
-    const next: Array<{ name: string; url: string; size: number }> = []
-    for (let i = 0; i < count; i++) {
-      const seed = generateRandomSeed(iterations)
-      try {
-        const JSZipModule = await import('jszip')
-        const zip = new JSZipModule.default()
-        // 放一个单文件进入zip
-        zip.file(seed.name, seed.content)
-        const blob = await zip.generateAsync({ type: 'blob' })
-        const url = URL.createObjectURL(blob)
-        blobUrls.current.push(url)
-        next.push({ name: seed.name.replace(/\.java$/,'') + '.zip', url, size: blob.size })
-      } catch (e:any) {
-        setError('单个 Seed 打包失败: ' + (e?.message || '未知错误'))
+    
+    try {
+      // 使用 fetch 接收流式进度
+      const response = await fetch('/api/generate-seeds', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          iterations: iterations,
+          count: count,
+          stream: true, // 启用流式传输
+        }),
+      })
+      
+      if (!response.ok) {
+        throw new Error(`生成失败: ${response.statusText}`)
       }
+      
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      
+      if (!reader) {
+        throw new Error('无法读取响应流')
+      }
+      
+      let buffer = ''
+      let startTime = Date.now()
+      
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) break
+        
+        buffer += decoder.decode(value, { stream: true })
+        
+        // 处理SSE消息（格式：data: {...}\n\n）
+        const messages = buffer.split('\n\n')
+        buffer = messages.pop() || '' // 保留不完整的消息
+        
+        for (const message of messages) {
+          if (!message.trim() || !message.startsWith('data:')) continue
+          
+          try {
+            const jsonStr = message.replace(/^data:\s*/, '')
+            const data = JSON.parse(jsonStr)
+            
+            switch (data.type) {
+              case 'started':
+                console.log('生成已开始')
+                break
+                
+              case 'progress':
+                const progress = data.progress || 0
+                setGenerationProgress(progress)
+                
+                // 计算预估剩余时间
+                const elapsed = (Date.now() - startTime) / 1000
+                const rate = progress > 0 ? elapsed / progress : 0
+                const remaining = rate * (100 - progress)
+                setEstimatedTimeRemaining(remaining)
+                break
+                
+              case 'case_success':
+                console.log(`测试用例 ${data.case} 生成成功`)
+                break
+                
+              case 'case_error':
+                console.log(`测试用例 ${data.case} 生成失败`)
+                break
+                
+              case 'complete':
+                setGenerationProgress(100)
+                setEstimatedTimeRemaining(0)
+                
+                // 处理返回的测试用例
+                await handleTestCasesComplete(data.testCases)
+                return
+                
+              case 'error':
+                throw new Error(data.error || '生成失败')
+            }
+          } catch (err) {
+            console.error('处理进度消息失败:', err)
+          }
+        }
+      }
+      
+    } catch (e: any) {
+      console.error('生成种子失败:', e)
+      setError('种子生成失败: ' + (e?.message || '未知错误'))
+      setAcquiring(false)
+      setGenerationProgress(0)
+      setEstimatedTimeRemaining(null)
     }
-    setItems(next)
-    setAcquiring(false)
+  }
+  
+  async function handleTestCasesComplete(testCases: any[]) {
+    try {
+      const next: Array<{ name: string; url: string; size: number }> = []
+      
+      if (testCases && Array.isArray(testCases)) {
+        const JSZipModule = await import('jszip')
+        
+        for (const testCase of testCases) {
+          try {
+            const zip = new JSZipModule.default()
+            
+            // 将测试用例中的所有文件添加到zip中，保持目录结构
+            for (const file of testCase.files) {
+              zip.file(file.path, file.content)
+            }
+            
+            const blob = await zip.generateAsync({ type: 'blob' })
+            const url = URL.createObjectURL(blob)
+            blobUrls.current.push(url)
+            next.push({ 
+              name: testCase.name + '.zip', 
+              url, 
+              size: blob.size 
+            })
+          } catch (e: any) {
+            console.error('单个测试用例打包失败:', e)
+          }
+        }
+      }
+      
+      setItems(next)
+      setAcquiring(false)
+      
+      // 保持100%进度显示一小会儿
+      setTimeout(() => {
+        setGenerationProgress(0)
+        setEstimatedTimeRemaining(null)
+      }, 3000)
+    } catch (e: any) {
+      setError('处理测试用例失败: ' + (e?.message || '未知错误'))
+      setAcquiring(false)
+      setGenerationProgress(0)
+      setEstimatedTimeRemaining(null)
+    }
   }
 
   function downloadOne(it: { name: string; url: string }) {
@@ -839,7 +983,8 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
       setZipUrl(url)
       const a = document.createElement('a')
       a.href = url
-      a.download = `seeds-${Date.now()}.zip`
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+      a.download = `test_cases_batch_${timestamp}.zip`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -869,7 +1014,7 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
           </div>
           <div className="flex flex-col">
             <div className="text-lg md:text-xl font-semibold tracking-wide text-emerald-200 leading-tight">种子生成</div>
-            <div className="text-xs md:text-sm text-white/65 mt-0.5">批量 Java Seed 生成 · ZIP 打包下载</div>
+            <div className="text-xs md:text-sm text-white/65 mt-0.5">批量测试用例生成 · 支持单独/批量ZIP下载</div>
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-2">
@@ -878,67 +1023,133 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
         <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.35),transparent_70%)]" />
       </div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-white">种子生成</h3>
+        <h3 className="font-semibold text-white">测试用例生成</h3>
         <div className="flex items-center gap-2 text-xs text-white/70">
-          <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">数量: <span className="text-white">{count}</span></span>
+          <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">测试用例: <span className="text-white">{count}</span></span>
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">迭代: <span className="text-white">{iterations}</span></span>
-          <span className="text-white/40">单独ZIP + 总打包</span>
+          {items.length > 0 && (
+            <span className="px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+              已生成: {items.length}
+            </span>
+          )}
         </div>
       </div>
       <div className="flex items-center flex-wrap gap-3 text-xs">
         <div className="flex items-center gap-1">
-          <label htmlFor="cnt-select" className="text-white/60">数量</label>
-          <select id="cnt-select" className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none" value={count} onChange={(e) => setCount(parseInt(e.target.value, 10))}>
-            <option value={1}>1</option>
-            <option value={3}>3</option>
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-          </select>
+          <label htmlFor="cnt-input" className="text-white/60">测试用例数</label>
+          <input 
+            id="cnt-input" 
+            type="number" 
+            min="1" 
+            max="100"
+            className="w-20 px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" 
+            value={count} 
+            onChange={(e) => setCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            disabled={acquiring}
+          />
         </div>
         <div className="flex items-center gap-1">
-          <label htmlFor="iter-select2" className="text-white/60">迭代次数</label>
-          <select id="iter-select2" className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none" value={iterations} onChange={(e) => setIterations(parseInt(e.target.value, 10))}>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-            <option value={150}>150</option>
-          </select>
+          <label htmlFor="iter-input" className="text-white/60">迭代次数</label>
+          <input 
+            id="iter-input" 
+            type="number" 
+            min="1" 
+            max="1000"
+            className="w-20 px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" 
+            value={iterations} 
+            onChange={(e) => setIterations(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            disabled={acquiring}
+          />
         </div>
-        <button className="btn-primary disabled:opacity-50" disabled={acquiring} onClick={acquire} aria-label="种子生成">{acquiring ? (<><Loader2 size={14} className="animate-spin"/> 生成中...</>) : '生成'}</button>
-        {items.length > 0 && (
-          <div className="flex items-center gap-2">
-            <button className="btn text-xs px-2 py-1 inline-flex items-center gap-2" onClick={downloadAll} disabled={zipBuilding}>
-              {zipBuilding ? (<><Loader2 size={14} className="animate-spin"/> 打包中 {zipProgress}%</>) : (<><Download size={14}/> 总打包下载</>)}
-            </button>
-            {zipUrl && !zipBuilding && (
-              <a className="text-xs text-white/60 underline" href={zipUrl} download>重新下载总ZIP</a>
-            )}
-            {zipJustBuilt && !zipBuilding && (
-              <span className="text-[11px] text-emerald-300 inline-flex items-center gap-1"><CheckCircle2 size={14}/> 打包完成</span>
-            )}
+        <button className="btn-primary disabled:opacity-50" disabled={acquiring} onClick={acquire} aria-label="生成测试用例">{acquiring ? (<><Loader2 size={14} className="animate-spin"/> 生成中...</>) : '生成'}</button>
+        {items.length > 0 && !acquiring && (
+          <button className="btn text-xs px-3 py-1.5 inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-medium" onClick={downloadAll} disabled={zipBuilding}>
+            {zipBuilding ? (<><Loader2 size={14} className="animate-spin"/> 打包中 {zipProgress}%</>) : (<><Download size={14}/> 批量下载 ({items.length})</>)}
+          </button>
+        )}
+        {zipUrl && !zipBuilding && items.length > 0 && (
+          <a className="text-xs text-white/60 hover:text-white/80 underline inline-flex items-center gap-1" href={zipUrl} download>
+            <Download size={12}/> 重新下载批量ZIP
+          </a>
+        )}
+        {zipJustBuilt && !zipBuilding && (
+          <span className="text-[11px] text-emerald-300 inline-flex items-center gap-1 animate-pulse"><CheckCircle2 size={14}/> 打包完成</span>
+        )}
+        {error && (
+          <div className="w-full text-rose-400 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto bg-rose-950/20 border border-rose-500/30 rounded p-2 mt-2">
+            {error}
           </div>
         )}
-        {error && <span className="text-rose-400 text-xs">{error}</span>}
       </div>
+      
+      {/* 生成进度条 */}
+      {acquiring && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin text-emerald-400"/>
+              <span className="text-white/80 font-medium">正在生成测试用例...</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-300 font-semibold">{generationProgress}%</span>
+              {estimatedTimeRemaining !== null && estimatedTimeRemaining > 0 && (
+                <span className="text-white/60 text-xs">预计剩余: {formatTimeRemaining(estimatedTimeRemaining)}</span>
+              )}
+            </div>
+          </div>
+          <div className="relative w-full h-4 bg-white/10 rounded-lg overflow-hidden">
+            <div 
+              className="h-full transition-all duration-300 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 relative overflow-hidden"
+              style={{ width: `${generationProgress}%` }}
+            >
+              {/* 动画光泽效果 */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+            </div>
+          </div>
+          <div className="text-xs text-white/50 flex items-center gap-2">
+            <Activity size={12}/>
+            <span>生成 {count} 个测试用例，每个 {iterations} 次迭代</span>
+          </div>
+        </div>
+      )}
       {items.length > 0 && (
-        <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {items.map((it) => (
-            <div key={it.url} className="rounded-lg border border-white/10 bg-white/5 p-2 hover:bg-white/10 transition shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="truncate text-white/80 text-xs" title={it.name}>{it.name}</div>
-                <button className="btn-ghost text-[11px] px-2 py-1 inline-flex items-center gap-1" onClick={() => downloadOne(it)}>
-                  <Download size={12}/> 单独
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium text-white/80">生成的测试用例</h4>
+            <span className="text-xs text-white/50">{items.length} 个测试用例</span>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {items.map((it, idx) => (
+              <div key={it.url} className="rounded-lg border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-3 hover:from-white/10 hover:to-white/5 hover:border-white/20 transition-all shadow-sm group">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-md bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
+                      {idx + 1}
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="text-sm font-medium text-white/90 truncate max-w-[140px]" title={it.name}>
+                        {it.name.replace('.zip', '')}
+                      </div>
+                      <div className="text-[10px] text-white/40">{Math.round(it.size/1024)} KB</div>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  className="w-full btn-ghost text-[11px] px-2 py-1.5 inline-flex items-center justify-center gap-1.5 group-hover:bg-white/10" 
+                  onClick={() => downloadOne(it)}
+                >
+                  <Download size={12}/> 下载此测试用例
                 </button>
               </div>
-              <div className="text-[10px] text-white/40 mt-0.5">{Math.round(it.size/1024)} KB</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
       {zipBuilding && (
         <div className="mt-3">
-          <div className="text-xs text-white/60 mb-1">正在打包 {items.length} 个 Seed 包：{zipProgress}%</div>
+          <div className="text-xs text-white/60 mb-1">正在打包 {items.length} 个测试用例：{zipProgress}%</div>
           <div className="w-full h-3 bg-white/10 rounded-lg overflow-hidden">
-            <div className="h-full transition-all duration-200 bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400" style={{ width: `${zipProgress}%` }} />
+            <div className="h-full transition-all duration-200 bg-gradient-to-r from-emerald-500 via-cyan-400 to-sky-400" style={{ width: `${zipProgress}%` }} />
           </div>
         </div>
       )}

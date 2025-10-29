@@ -81,6 +81,15 @@
 }
 .sheen { background-size: 200% 100%; animation: sheen 4s linear infinite; }
 
+/* Shimmer animation for progress bars */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
 /* Fancy generate-seed button */
 .seed-btn {
   position: relative;
