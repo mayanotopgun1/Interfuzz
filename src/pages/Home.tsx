@@ -136,7 +136,7 @@ export default function Home() {
               动机与要点
             </span>
           </div>
-          <h2 className="text-3xl md:text-3xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-semibold tracking-tight">
             异构程序图建模 + 跨类变异 + 复杂度引导的编译器模糊测试
           </h2>
           <div className="mt-2 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent)] sheen" />
