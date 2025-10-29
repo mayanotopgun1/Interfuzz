@@ -13,13 +13,12 @@ export default function Home() {
         <div className="absolute -bottom-24 -right-24 h-72 w-72 bg-indigo-700/30 blur-3xl rounded-full" />
 
   <div className="relative px-6 py-14 md:px-10 md:py-20 text-center">
-          <div className="inline-flex">
-            <span className="badge">Fuzzing Java optimizing compilers</span>
-          </div>
-          <h1 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight">InterFuzz</h1>
-          <p className="mt-4 md:mt-6 text-base md:text-xl text-white/70 max-w-3xl mx-auto">
-            面向复杂“类间结构”的高层程序图（HPG）建模与变异，引导性挖掘 Java 优化编译器缺陷。
-          </p>
+          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">InterFuzz</h1>
+          <p className="mt-4 md:mt-6 text-lg md:text-xl text-white/70 max-w-5xl mx-auto">
+            基于异构程序图（HPG）生成<strong className="text-white font-semibold">具有丰富跨类结构</strong>的Java测试种子，<br />
+            系统化构造继承、接口、嵌套、泛型、引用等复杂类间关系，<br />
+            用于检测优化编译器的缺陷
+          </p> 
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               to="/demo"
@@ -31,9 +30,9 @@ export default function Home() {
             <Link
               to="/principle"
               className="btn transition-transform hover:-translate-y-0.5 hover:ring-1 hover:ring-white/30"
-              aria-label="查看原理"
+              aria-label="查看工具介绍"
             >
-              <BookOpen size={18} /> 查看原理
+              <BookOpen size={18} /> 工具介绍
             </Link>
           </div>
 
@@ -43,18 +42,18 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white grid place-items-center mb-3">
                 <GitBranch className="opacity-90" size={22} />
               </div>
-              <h3 className="text-lg font-semibold mb-1">结构建模 · HPG</h3>
-              <p className="text-white/70">用高层程序图抽象类/接口/方法及其语义关系，统一表达与分析。</p>
+              <h3 className="text-xl font-semibold mb-1">工具介绍 · Introduction</h3>
+              <p className="text-white/70 text-base">用高层程序图抽象类/接口/方法及其语义关系，统一表达与分析。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
-                了解原理 <ArrowRight size={16} />
+                了解详情 <ArrowRight size={16} />
               </div>
             </Link>
             <Link to="/demo" className="group rounded-2xl bg-white/5 border border-white/10 p-5 hover:bg-white/10 hover:-translate-y-1 transition duration-300">
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white grid place-items-center mb-3">
                 <PlayCircle className="opacity-90" size={22} />
               </div>
-              <h3 className="text-lg font-semibold mb-1">可视交互 · Demo</h3>
-              <p className="text-white/70">粘贴/示例 JSON 即刻成图，双图对照与标签距离调节一键掌控。</p>
+              <h3 className="text-xl font-semibold mb-1">种子生成 · Tool</h3>
+              <p className="text-white/70 text-base">粘贴/示例 JSON 即刻成图，双图对照与标签距离调节一键掌控。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
                 开始体验 <ArrowRight size={16} />
               </div>
@@ -63,8 +62,8 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white grid place-items-center mb-3">
                 <BarChart3 className="opacity-90" size={22} />
               </div>
-              <h3 className="text-lg font-semibold mb-1">研究结果 · Evaluation</h3>
-              <p className="text-white/70">统计与案例一目了然，直达发现的编译器问题与复现线索。</p>
+              <h3 className="text-xl font-semibold mb-1">研究结果 · Evaluation</h3>
+              <p className="text-white/70 text-base">统计与案例一目了然，直达发现的编译器问题与复现线索。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
                 查看效果 <ArrowRight size={16} />
               </div>
@@ -132,16 +131,16 @@ export default function Home() {
           <div className="flex items-center gap-2 mb-3">
             <span className="badge">来自论文</span>
             <ScrollText size={18} className="opacity-80" />
-            <span className="inline-flex items-center gap-1 text-xs text-white/70">
+            <span className="inline-flex items-center gap-1 text-sm text-white/70">
               <Sparkles size={14} className="text-yellow-300" />
               动机与要点
             </span>
           </div>
-          <h2 className="text-xl md:text-2xl font-semibold tracking-tight">
+          <h2 className="text-3xl md:text-3xl font-semibold tracking-tight">
             异构程序图建模 + 跨类变异 + 复杂度引导的编译器模糊测试
           </h2>
           <div className="mt-2 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent)] sheen" />
-          <p className="mt-3 text-white/80 max-w-4xl">
+          <p className="mt-3 text-base text-white/80 max-w-4xl">
             针对复杂类间结构难以系统化生成的挑战，InterFuzz 提出三大核心组件：
             异构程序图（HPG）统一表示类间结构、跨类结构变异算子系统化生成复杂关系、
             图复杂度引导优先探索易触发缺陷的程序形态。
@@ -171,7 +170,7 @@ export default function Home() {
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-white">{it.title}</h3>
                   </div>
-                  <p className="text-white/80 text-sm leading-relaxed">{it.desc}</p>
+                  <p className="text-white/80 text-base leading-relaxed">{it.desc}</p>
                 </div>
               ))}
             </div>
@@ -188,7 +187,7 @@ export default function Home() {
                     <h3 className="font-medium">{it.title}</h3>
                     <span className="w-1.5 h-1.5 rounded-full bg-white/40 group-hover:bg-white/80 transition" />
                   </div>
-                  <p className="mt-1 text-white/70 text-sm">{it.desc}</p>
+                  <p className="mt-1 text-white/70 text-base">{it.desc}</p>
                 </div>
               ))}
             </div>

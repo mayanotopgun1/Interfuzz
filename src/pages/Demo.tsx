@@ -392,20 +392,13 @@ export default function Demo() {
 
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div className="card">
-        <h2 className="text-2xl font-semibold mb-2">{HEADER_TITLE}</h2>
-        <p className="text-white/70">{HEADER_SUBTITLE}</p>
-        <div className="mt-3 flex items-start justify-between gap-4">
-          <div className="text-xs text-white/50 flex items-start gap-2 bg-white/5 border border-white/10 rounded-xl p-3 flex-1">
-            <Info size={14} className="mt-0.5 text-sky-300"/> <span>{PIPELINE_DESCRIPTION}</span>
-          </div>
-          <div className="hidden md:flex text-xs text-white/40 flex-col items-end pt-1">
-            <span>Prototype · UI Simulation</span>
-            <span>Academic Alignment</span>
-          </div>
-        </div>
+      {/* 页面标题 */}
+      <div className="mb-8">
+        <h1 className="text-5xl font-bold text-white mb-2">种子生成</h1>
+        <p className="text-white/60 text-base">InterFuzz 测试用例生成与可视化演示</p>
       </div>
+
+      {/* Header - 已移除详细说明部分 */}
       {/* 自动流程演示模块 */}
       <div className="card" id="pipeline-section">
         {/* 模块醒目头部 */}
@@ -415,12 +408,9 @@ export default function Demo() {
               <PlayCircle size={24} />
             </div>
             <div className="flex flex-col">
-              <div className="text-lg md:text-xl font-semibold tracking-wide text-cyan-200 leading-tight">分析—变异流水线</div>
-              <div className="text-xs md:text-sm text-white/65 mt-0.5">结构 → 初始HPG → 变异 → 变异后HPG → 测试程序</div>
+              <div className="text-xl md:text-2xl font-semibold tracking-wide text-cyan-200 leading-tight">分析—变异流水线</div>
+              <div className="text-sm md:text-base text-white/65 mt-0.5">结构 → 初始HPG → 变异 → 变异后HPG → 测试程序</div>
             </div>
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-md text-[11px] bg-white/10 border border-white/15 text-white/70 font-medium tracking-wide">核心模块</span>
           </div>
           <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_85%_15%,rgba(255,255,255,0.35),transparent_70%)]" />
         </div>
@@ -437,10 +427,10 @@ export default function Demo() {
               >{analysisRunning ? (<><Loader2 size={16} className="animate-spin"/> 运行中...</>) : '开始分析'}</button>
             </div>
             {/* 固定真实图数据集提示 */}
-            <div className="text-[11px] text-white/50 flex items-center gap-2">
+            <div className="text-sm text-white/50 flex items-center gap-2">
               <span className="px-2 py-1 rounded bg-white/5 border border-white/10">图数据集: 真实案例 (input.json → output.json)</span>
             </div>
-            <div className="flex items-center gap-2 flex-wrap text-xs mb-1 relative">
+            <div className="flex items-center gap-2 flex-wrap text-sm mb-1 relative">
               <label className="text-white/60">Seed：</label>
               <button
                 type="button"
@@ -465,7 +455,7 @@ export default function Demo() {
                       <div className="flex items-center justify-between mb-1">
                         <div className={`font-medium truncate ${isLight ? 'text-slate-700 group-hover:text-slate-800' : 'text-white/80 group-hover:text-white'}`}>input.java</div>
                         <button
-                          className={`text-[11px] px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'btn-ghost border-white/15 text-white/60 hover:text-white'}`}
+                          className={`text-sm px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'btn-ghost border-white/15 text-white/60 hover:text-white'}`}
                           disabled={!inputSeedContent}
                           onClick={useInputSeed}
                         >选用</button>
@@ -479,7 +469,7 @@ export default function Demo() {
                 <>
                   <div className="h-4 w-px bg-white/10 mx-1" />
                   <button
-                    className="btn text-xs px-2 py-1"
+                    className="btn text-sm px-2 py-1"
                     onClick={() => {
                       setSelectedFile(null)
                       setSelectedFileContent('')
@@ -490,18 +480,18 @@ export default function Demo() {
                       if (outputJavaBlobUrl) { URL.revokeObjectURL(outputJavaBlobUrl); setOutputJavaBlobUrl(null) }
                     }}>移除文件</button>
                   <button
-                    className="btn text-xs px-2 py-1"
+                    className="btn text-sm px-2 py-1"
                     disabled={analysisRunning}
                     onClick={() => { setAnalysisDone(false); setCurrentStep(-1); setMutatedCode(''); if (outputJavaBlobUrl) { URL.revokeObjectURL(outputJavaBlobUrl); setOutputJavaBlobUrl(null) } startAutoDemo() }}
                   >重新运行</button>
                 </>
               )}
             </div>
-            <p className="text-xs text-white/50">导入 Seed 后系统依次执行：Seed 导入 → 结构分析 → 初始 HPG → 变异执行 → 变异后 HPG → 测试程序。</p>
+            <p className="text-sm text-white/50">导入 Seed 后系统依次执行：Seed 导入 → 结构分析 → 初始 HPG → 变异执行 → 变异后 HPG → 测试程序。</p>
             {/* 输入预览 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-white/70 text-xs font-semibold tracking-wide">输入 Seed 源码</h4>
+                <h4 className="text-white/70 text-sm font-semibold tracking-wide">输入 Seed 源码</h4>
                 {selectedFile && <span className="text-[10px] text-white/40">{selectedFile.name}</span>}
               </div>
               {selectedFile && selectedFileContent ? (
@@ -509,7 +499,7 @@ export default function Demo() {
                   <CodePreview code={selectedFileContent} language="java" filename={selectedFile?.name || 'Seed.java'} maxHeight={260} />
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-xs text-white/45">
+                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-sm text-white/45">
                   选择或导入 Seed 后显示源码
                 </div>
               )}
@@ -517,18 +507,18 @@ export default function Demo() {
             {/* 输出预览 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-white/70 text-xs font-semibold tracking-wide">输出结果</h4>
+                <h4 className="text-white/70 text-sm font-semibold tracking-wide">输出结果</h4>
                 {mutatedCode && <span className="text-[10px] text-white/40">已生成</span>}
               </div>
               {mutatedCode ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-white/50">测试程序 (output.java)</span>
+                    <span className="text-sm text-white/50">测试程序 (output.java)</span>
                     {outputJavaBlobUrl && (
                       <a
                         href={outputJavaBlobUrl}
                         download="output.java"
-                        className="text-cyan-300 underline hover:text-cyan-200 text-[11px]"
+                        className="text-cyan-300 underline hover:text-cyan-200 text-sm"
                       >下载 output.java</a>
                     )}
                   </div>
@@ -540,7 +530,7 @@ export default function Demo() {
                   />
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-xs text-white/45 min-h-[140px] flex items-center justify-center">
+                <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-sm text-white/45 min-h-[140px] flex items-center justify-center">
                   等待流程生成测试程序…
                 </div>
               )}
@@ -552,17 +542,17 @@ export default function Demo() {
             <div className={`relative rounded-xl border p-6 flex flex-col gap-6 overflow-hidden transition-all duration-500 min-h-[300px] graph-struct-surface ${compareJustActivated ? 'ring-1 ring-cyan-400/40 scale-[1.02]' : ''} ${isLight ? 'border-slate-200 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200' : 'border-white/10 bg-gradient-to-br from-[rgba(35,50,70,0.55)] via-[rgba(20,28,40,0.55)] to-[rgba(12,18,30,0.55)]'}`}>
               <div className="absolute inset-0 pointer-events-none opacity-[0.18] bg-[radial-gradient(circle_at_70%_30%,rgba(0,155,220,0.45),transparent_60%)]" />
               <div className="flex items-center justify-between relative z-10">
-                <h4 className={`text-xs font-semibold tracking-wide flex items-center gap-1 ${tone.heading}`}><BarChart2 size={14} className="text-cyan-400"/>{compareMode ? 'Graph 结构差异' : 'Seed 结构'}</h4>
+                <h4 className={`text-sm font-semibold tracking-wide flex items-center gap-1 ${tone.heading}`}><BarChart2 size={14} className="text-cyan-400"/>{compareMode ? 'Graph 结构差异' : 'Seed 结构'}</h4>
                 <button
                   type="button"
                   onClick={() => setCompareMode(m => !m)}
-                  className={`text-[10px] px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'border-white/15 bg-white/5 hover:bg-white/10 text-white/60'}`}
+                  className={`text-sm px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'border-white/15 bg-white/5 hover:bg-white/10 text-white/60'}`}
                 >{compareMode ? '单列视图' : '对比视图'}</button>
               </div>
               {!compareMode && (
                 <div className="relative z-10 flex-1 flex flex-col gap-6">
                   <div className="flex flex-col">
-                    <h5 className={`text-[11px] font-medium mb-2 ${tone.subHeading}`}>节点统计</h5>
+                    <h5 className={`text-sm font-medium mb-2 ${tone.subHeading}`}>节点统计</h5>
                     <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-3">
                       <MetricBlock label="Class" value={seedGraphSummary?.rowCounts.class ?? '-'} color="sky" />
                       <MetricBlock label="Interface" value={seedGraphSummary?.rowCounts.interface ?? '-'} color="cyan" />
@@ -572,23 +562,23 @@ export default function Demo() {
                     {/* 移除原行统计说明 */}
                   </div>
                   <div className="flex flex-col">
-                    <h5 className={`text-[11px] font-medium mb-2 ${tone.subHeading}`}>边统计</h5>
+                    <h5 className={`text-sm font-medium mb-2 ${tone.subHeading}`}>边统计</h5>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                       <MetricBlock label="Reference" value={seedGraphSummary?.edgeKindCounts['reference'] ?? '-'} color="teal" />
-                      <MetricBlock label="Interface Implementation" value={seedGraphSummary?.edgeKindCounts['interface-impl'] ?? '-'} color="violet" />
+                      <MetricBlock label="Interface Impl." value={seedGraphSummary?.edgeKindCounts['interface-impl'] ?? '-'} color="violet" />
                       <MetricBlock label="Inheritance" value={seedGraphSummary?.edgeKindCounts['inheritance'] ?? '-'} color="indigo" />
                       <MetricBlock label="Nesting" value={seedGraphSummary?.edgeKindCounts['nesting'] ?? '-'} color="rose" />
                       <MetricBlock label="Generic Bounds" value={seedGraphSummary?.edgeKindCounts['generic-bounds'] ?? '-'} color="lime" />
                     </div>
                     {/* 移除原边分类说明 */}
                   </div>
-                  <div className={`text-[10px] italic ${tone.caption}`}>单列模式：加载右侧图后自动进入对比</div>
+                  <div className={`text-sm italic ${tone.caption}`}>单列模式：加载右侧图后自动进入对比</div>
                 </div>
               )}
               {compareMode && (
                 <div className="relative z-10 grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <h5 className={`text-[11px] font-medium flex items-center gap-1 ${tone.subHeading}`}><Activity size={12} className="text-sky-500"/>Seed</h5>
+                    <h5 className={`text-sm font-medium flex items-center gap-1 ${tone.subHeading}`}><Activity size={12} className="text-sky-500"/>Seed</h5>
                     <CompareLine label="Class" a={seedGraphSummary?.rowCounts.class} b={mutGraphSummary?.rowCounts.class} />
                     <CompareLine label="Interface" a={seedGraphSummary?.rowCounts.interface} b={mutGraphSummary?.rowCounts.interface} />
                     <CompareLine label="Method" a={seedGraphSummary?.rowCounts.method} b={mutGraphSummary?.rowCounts.method} />
@@ -601,12 +591,12 @@ export default function Demo() {
                     <CompareLine label="Generic Bounds" a={seedGraphSummary?.edgeKindCounts['generic-bounds']} b={mutGraphSummary?.edgeKindCounts['generic-bounds']} />
                   </div>
                   <div className="space-y-2">
-                    <h5 className={`text-[11px] font-medium flex items-center gap-1 ${tone.subHeading}`}><ArrowRightCircle size={12} className="text-emerald-500"/>差异摘要</h5>
+                    <h5 className={`text-sm font-medium flex items-center gap-1 ${tone.subHeading}`}><ArrowRightCircle size={12} className="text-emerald-500"/>差异摘要</h5>
                     <DiffSummaryAggregated graphDiff={graphDiff} tone={tone} />
-                    <div className={`mt-2 text-[10px] italic flex items-center gap-1 ${tone.caption}`}><Sparkles size={12} className="text-yellow-500"/>基于行(row)统计：方法/字段作为行计数，节点按首行类型分类。</div>
+                    <div className={`mt-2 text-sm italic flex items-center gap-1 ${tone.caption}`}><Sparkles size={12} className="text-yellow-500"/>基于行(row)统计：方法/字段作为行计数，节点按首行类型分类。</div>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {graphSuggestions.map((sg,i)=>(
-                        <span key={i} className="px-2 py-0.5 rounded-full bg-white/8 border border-white/10 text-[10px] text-white/65 backdrop-blur-sm">{sg}</span>
+                        <span key={i} className="px-2 py-0.5 rounded-full bg-white/8 border border-white/10 text-sm text-white/65 backdrop-blur-sm">{sg}</span>
                       ))}
                     </div>
                   </div>
@@ -637,8 +627,8 @@ export default function Demo() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <div className={`font-medium ${isConnector ? 'text-xs tracking-wide uppercase text-white/50' : ''} ${doneStep ? 'text-emerald-300' : isActive ? 'text-sky-300' : isConnector ? '' : 'text-white/70'}`}>{s}</div>
-                      {isActive && <div className="text-[11px] text-white/50 mt-0.5">处理中...</div>}
+                      <div className={`font-medium ${isConnector ? 'text-sm tracking-wide uppercase text-white/50' : ''} ${doneStep ? 'text-emerald-300' : isActive ? 'text-sky-300' : isConnector ? '' : 'text-white/70'}`}>{s}</div>
+                      {isActive && <div className="text-sm text-white/50 mt-0.5">处理中...</div>}
                     </div>
                   </div>
                 )
@@ -690,9 +680,9 @@ export default function Demo() {
       <div className="card">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-white/70">图结果</div>
+            <div className="text-base text-white/70">图结果</div>
             <div className="h-px flex-1 mx-3 bg-white/10" />
-            <div className="text-xs text-white/50">Left: 初始 HPG · Right: 变异后 HPG</div>
+            <div className="text-sm text-white/50">Left: 初始 HPG · Right: 变异后 HPG</div>
           </div>
           {/* 水平流程示意 */}
           <div className="hidden md:block">
@@ -734,7 +724,7 @@ interface AcquireSeedsProps {
 
 function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps) {
   const [count, setCount] = useState<number>(3)
-  const [iterations, setIterations] = useState<number>(100)
+  const [iterations, setIterations] = useState<number>(10)
   const [acquiring, setAcquiring] = useState(false)
   const [items, setItems] = useState<Array<{ name: string; url: string; size: number }>>([])
   const [zipBuilding, setZipBuilding] = useState(false)
@@ -742,38 +732,182 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
   const [zipUrl, setZipUrl] = useState<string | null>(null)
   const [zipJustBuilt, setZipJustBuilt] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [generationProgress, setGenerationProgress] = useState(0)
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number | null>(null)
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // 清理单独创建的 blob (ZIP) URL
   useEffect(() => {
     return () => {
       if (zipUrl) URL.revokeObjectURL(zipUrl)
+      if (progressTimerRef.current) clearInterval(progressTimerRef.current)
     }
   }, [zipUrl])
+
+  // 格式化剩余时间
+  function formatTimeRemaining(seconds: number): string {
+    if (seconds < 60) return `${Math.ceil(seconds)}秒`
+    const minutes = Math.floor(seconds / 60)
+    const secs = Math.ceil(seconds % 60)
+    return `${minutes}分${secs}秒`
+  }
 
   async function acquire() {
     if (acquiring) return
     setAcquiring(true)
     setError(null)
+    setGenerationProgress(0)
+    setEstimatedTimeRemaining(null)
+    
+    // 清理旧的进度定时器
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current)
+      progressTimerRef.current = null
+    }
+    
     // 清理旧 item urls
     items.forEach(it => URL.revokeObjectURL(it.url))
-    const next: Array<{ name: string; url: string; size: number }> = []
-    for (let i = 0; i < count; i++) {
-      const seed = generateRandomSeed(iterations)
-      try {
-        const JSZipModule = await import('jszip')
-        const zip = new JSZipModule.default()
-        // 放一个单文件进入zip
-        zip.file(seed.name, seed.content)
-        const blob = await zip.generateAsync({ type: 'blob' })
-        const url = URL.createObjectURL(blob)
-        blobUrls.current.push(url)
-        next.push({ name: seed.name.replace(/\.java$/,'') + '.zip', url, size: blob.size })
-      } catch (e:any) {
-        setError('单个 Seed 打包失败: ' + (e?.message || '未知错误'))
+    
+    try {
+      // 使用 fetch 接收流式进度
+      const response = await fetch('/api/generate-seeds', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          iterations: iterations,
+          count: count,
+          stream: true, // 启用流式传输
+        }),
+      })
+      
+      if (!response.ok) {
+        throw new Error(`生成失败: ${response.statusText}`)
       }
+      
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      
+      if (!reader) {
+        throw new Error('无法读取响应流')
+      }
+      
+      let buffer = ''
+      let startTime = Date.now()
+      
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) break
+        
+        buffer += decoder.decode(value, { stream: true })
+        
+        // 处理SSE消息（格式：data: {...}\n\n）
+        const messages = buffer.split('\n\n')
+        buffer = messages.pop() || '' // 保留不完整的消息
+        
+        for (const message of messages) {
+          if (!message.trim() || !message.startsWith('data:')) continue
+          
+          try {
+            const jsonStr = message.replace(/^data:\s*/, '')
+            const data = JSON.parse(jsonStr)
+            
+            switch (data.type) {
+              case 'started':
+                console.log('生成已开始')
+                break
+                
+              case 'progress':
+                const progress = data.progress || 0
+                setGenerationProgress(progress)
+                
+                // 计算预估剩余时间
+                const elapsed = (Date.now() - startTime) / 1000
+                const rate = progress > 0 ? elapsed / progress : 0
+                const remaining = rate * (100 - progress)
+                setEstimatedTimeRemaining(remaining)
+                break
+                
+              case 'case_success':
+                console.log(`测试用例 ${data.case} 生成成功`)
+                break
+                
+              case 'case_error':
+                console.log(`测试用例 ${data.case} 生成失败`)
+                break
+                
+              case 'complete':
+                setGenerationProgress(100)
+                setEstimatedTimeRemaining(0)
+                
+                // 处理返回的测试用例
+                await handleTestCasesComplete(data.testCases)
+                return
+                
+              case 'error':
+                throw new Error(data.error || '生成失败')
+            }
+          } catch (err) {
+            console.error('处理进度消息失败:', err)
+          }
+        }
+      }
+      
+    } catch (e: any) {
+      console.error('生成种子失败:', e)
+      setError('种子生成失败: ' + (e?.message || '未知错误'))
+      setAcquiring(false)
+      setGenerationProgress(0)
+      setEstimatedTimeRemaining(null)
     }
-    setItems(next)
-    setAcquiring(false)
+  }
+  
+  async function handleTestCasesComplete(testCases: any[]) {
+    try {
+      const next: Array<{ name: string; url: string; size: number }> = []
+      
+      if (testCases && Array.isArray(testCases)) {
+        const JSZipModule = await import('jszip')
+        
+        for (const testCase of testCases) {
+          try {
+            const zip = new JSZipModule.default()
+            
+            // 将测试用例中的所有文件添加到zip中，保持目录结构
+            for (const file of testCase.files) {
+              zip.file(file.path, file.content)
+            }
+            
+            const blob = await zip.generateAsync({ type: 'blob' })
+            const url = URL.createObjectURL(blob)
+            blobUrls.current.push(url)
+            next.push({ 
+              name: testCase.name + '.zip', 
+              url, 
+              size: blob.size 
+            })
+          } catch (e: any) {
+            console.error('单个测试用例打包失败:', e)
+          }
+        }
+      }
+      
+      setItems(next)
+      setAcquiring(false)
+      
+      // 保持100%进度显示一小会儿
+      setTimeout(() => {
+        setGenerationProgress(0)
+        setEstimatedTimeRemaining(null)
+      }, 3000)
+    } catch (e: any) {
+      setError('处理测试用例失败: ' + (e?.message || '未知错误'))
+      setAcquiring(false)
+      setGenerationProgress(0)
+      setEstimatedTimeRemaining(null)
+    }
   }
 
   function downloadOne(it: { name: string; url: string }) {
@@ -815,7 +949,8 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
       setZipUrl(url)
       const a = document.createElement('a')
       a.href = url
-      a.download = `seeds-${Date.now()}.zip`
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+      a.download = `test_cases_batch_${timestamp}.zip`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -844,77 +979,140 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
             <Download size={24} />
           </div>
           <div className="flex flex-col">
-            <div className="text-lg md:text-xl font-semibold tracking-wide text-emerald-200 leading-tight">种子生成</div>
-            <div className="text-xs md:text-sm text-white/65 mt-0.5">批量 Java Seed 生成 · ZIP 打包下载</div>
+            <div className="text-xl md:text-2xl font-semibold tracking-wide text-emerald-200 leading-tight">种子生成</div>
+            <div className="text-xs md:text-sm text-white/65 mt-0.5">批量测试用例生成 · 支持单独/批量ZIP下载</div>
           </div>
-        </div>
-        <div className="hidden sm:flex items-center gap-2">
-          <span className="px-3 py-1.5 rounded-md text-[11px] bg-white/10 border border-white/15 text-white/70 font-medium tracking-wide">核心模块</span>
         </div>
         <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.35),transparent_70%)]" />
       </div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-white">种子生成</h3>
-        <div className="flex items-center gap-2 text-xs text-white/70">
-          <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">数量: <span className="text-white">{count}</span></span>
+        <h3 className="font-semibold text-white">测试用例生成</h3>
+        <div className="flex items-center gap-2 text-sm text-white/70">
+          <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">测试用例: <span className="text-white">{count}</span></span>
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">迭代: <span className="text-white">{iterations}</span></span>
-          <span className="text-white/40">单独ZIP + 总打包</span>
+          {items.length > 0 && (
+            <span className="px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+              已生成: {items.length}
+            </span>
+          )}
         </div>
       </div>
-      <div className="flex items-center flex-wrap gap-3 text-xs">
+      <div className="flex items-center flex-wrap gap-3 text-sm">
         <div className="flex items-center gap-1">
-          <label htmlFor="cnt-select" className="text-white/60">数量</label>
-          <select id="cnt-select" className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none" value={count} onChange={(e) => setCount(parseInt(e.target.value, 10))}>
-            <option value={1}>1</option>
-            <option value={3}>3</option>
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-          </select>
+          <label htmlFor="cnt-input" className="text-white/60">测试用例数</label>
+          <input 
+            id="cnt-input" 
+            type="number" 
+            min="1" 
+            max="100"
+            className="w-20 px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" 
+            value={count} 
+            onChange={(e) => setCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            disabled={acquiring}
+          />
         </div>
         <div className="flex items-center gap-1">
-          <label htmlFor="iter-select2" className="text-white/60">迭代次数</label>
-          <select id="iter-select2" className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none" value={iterations} onChange={(e) => setIterations(parseInt(e.target.value, 10))}>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-            <option value={150}>150</option>
-          </select>
+          <label htmlFor="iter-input" className="text-white/60">迭代次数</label>
+          <input 
+            id="iter-input" 
+            type="number" 
+            min="1" 
+            max="1000"
+            className="w-20 px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 focus:outline-none focus:ring-1 focus:ring-emerald-500/50" 
+            value={iterations} 
+            onChange={(e) => setIterations(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            disabled={acquiring}
+          />
         </div>
-        <button className="btn-primary disabled:opacity-50" disabled={acquiring} onClick={acquire} aria-label="种子生成">{acquiring ? (<><Loader2 size={14} className="animate-spin"/> 生成中...</>) : '生成'}</button>
-        {items.length > 0 && (
-          <div className="flex items-center gap-2">
-            <button className="btn text-xs px-2 py-1 inline-flex items-center gap-2" onClick={downloadAll} disabled={zipBuilding}>
-              {zipBuilding ? (<><Loader2 size={14} className="animate-spin"/> 打包中 {zipProgress}%</>) : (<><Download size={14}/> 总打包下载</>)}
-            </button>
-            {zipUrl && !zipBuilding && (
-              <a className="text-xs text-white/60 underline" href={zipUrl} download>重新下载总ZIP</a>
-            )}
-            {zipJustBuilt && !zipBuilding && (
-              <span className="text-[11px] text-emerald-300 inline-flex items-center gap-1"><CheckCircle2 size={14}/> 打包完成</span>
-            )}
+        <button className="btn-primary disabled:opacity-50" disabled={acquiring} onClick={acquire} aria-label="生成测试用例">{acquiring ? (<><Loader2 size={14} className="animate-spin"/> 生成中...</>) : '生成'}</button>
+        {items.length > 0 && !acquiring && (
+          <button className="btn text-xs px-3 py-1.5 inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-medium" onClick={downloadAll} disabled={zipBuilding}>
+            {zipBuilding ? (<><Loader2 size={14} className="animate-spin"/> 打包中 {zipProgress}%</>) : (<><Download size={14}/> 批量下载 ({items.length})</>)}
+          </button>
+        )}
+        {zipUrl && !zipBuilding && items.length > 0 && (
+          <a className="text-xs text-white/60 hover:text-white/80 underline inline-flex items-center gap-1" href={zipUrl} download>
+            <Download size={12}/> 重新下载批量ZIP
+          </a>
+        )}
+        {zipJustBuilt && !zipBuilding && (
+          <span className="text-sm text-emerald-300 inline-flex items-center gap-1 animate-pulse"><CheckCircle2 size={14}/> 打包完成</span>
+        )}
+        {error && (
+          <div className="w-full text-rose-400 text-sm whitespace-pre-wrap max-h-40 overflow-y-auto bg-rose-950/20 border border-rose-500/30 rounded p-2 mt-2">
+            {error}
           </div>
         )}
-        {error && <span className="text-rose-400 text-xs">{error}</span>}
       </div>
+      
+      {/* 生成进度条 */}
+      {acquiring && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin text-emerald-400"/>
+              <span className="text-white/80 font-medium">正在生成测试用例...</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-300 font-semibold">{generationProgress}%</span>
+              {estimatedTimeRemaining !== null && estimatedTimeRemaining > 0 && (
+                <span className="text-white/60 text-xs">预计剩余: {formatTimeRemaining(estimatedTimeRemaining)}</span>
+              )}
+            </div>
+          </div>
+          <div className="relative w-full h-4 bg-white/10 rounded-lg overflow-hidden">
+            <div 
+              className="h-full transition-all duration-300 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 relative overflow-hidden"
+              style={{ width: `${generationProgress}%` }}
+            >
+              {/* 动画光泽效果 */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+            </div>
+          </div>
+          <div className="text-sm text-white/50 flex items-center gap-2">
+            <Activity size={12}/>
+            <span>生成 {count} 个测试用例，每个 {iterations} 次迭代</span>
+          </div>
+        </div>
+      )}
       {items.length > 0 && (
-        <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {items.map((it) => (
-            <div key={it.url} className="rounded-lg border border-white/10 bg-white/5 p-2 hover:bg-white/10 transition shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="truncate text-white/80 text-xs" title={it.name}>{it.name}</div>
-                <button className="btn-ghost text-[11px] px-2 py-1 inline-flex items-center gap-1" onClick={() => downloadOne(it)}>
-                  <Download size={12}/> 单独
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-medium text-white/80">生成的测试用例</h4>
+            <span className="text-sm text-white/50">{items.length} 个测试用例</span>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {items.map((it, idx) => (
+              <div key={it.url} className="rounded-lg border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-3 hover:from-white/10 hover:to-white/5 hover:border-white/20 transition-all shadow-sm group">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-md bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
+                      {idx + 1}
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="text-sm font-medium text-white/90 truncate max-w-[140px]" title={it.name}>
+                        {it.name.replace('.zip', '')}
+                      </div>
+                      <div className="text-[10px] text-white/40">{Math.round(it.size/1024)} KB</div>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  className="w-full btn-ghost text-sm px-2 py-1.5 inline-flex items-center justify-center gap-1.5 group-hover:bg-white/10" 
+                  onClick={() => downloadOne(it)}
+                >
+                  <Download size={12}/> 下载此测试用例
                 </button>
               </div>
-              <div className="text-[10px] text-white/40 mt-0.5">{Math.round(it.size/1024)} KB</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
       {zipBuilding && (
         <div className="mt-3">
-          <div className="text-xs text-white/60 mb-1">正在打包 {items.length} 个 Seed 包：{zipProgress}%</div>
+          <div className="text-sm text-white/60 mb-1">正在打包 {items.length} 个测试用例：{zipProgress}%</div>
           <div className="w-full h-3 bg-white/10 rounded-lg overflow-hidden">
-            <div className="h-full transition-all duration-200 bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400" style={{ width: `${zipProgress}%` }} />
+            <div className="h-full transition-all duration-200 bg-gradient-to-r from-emerald-500 via-cyan-400 to-sky-400" style={{ width: `${zipProgress}%` }} />
           </div>
         </div>
       )}
@@ -936,8 +1134,8 @@ function MetricBlock({ label, value, color }: MetricBlockProps) {
   }
   return (
     <div className={`rounded-lg border p-2 flex flex-col items-center gap-1 ${isLight ? 'border-slate-200 bg-white' : 'border-white/10 bg-white/5'}`}>
-      <div className={`text-[10px] text-center leading-tight ${isLight ? 'text-slate-500' : 'text-white/45'}`}>{label}</div>
-      <div className={`text-sm font-semibold ${ (isLight ? colorMapLight[color] : colorMapDark[color]) || (isLight ? 'text-slate-700' : 'text-white/70')}`}>{value}</div>
+      <div className={`text-sm text-center leading-tight ${isLight ? 'text-slate-500' : 'text-white/45'}`}>{label}</div>
+      <div className={`text-base font-semibold ${ (isLight ? colorMapLight[color] : colorMapDark[color]) || (isLight ? 'text-slate-700' : 'text-white/70')}`}>{value}</div>
     </div>
   )
 }
@@ -945,14 +1143,14 @@ interface CompareLineProps { label: string; a?: number; b?: number }
 function CompareLine({ label, a, b }: CompareLineProps) {
   const isLight = typeof document !== 'undefined' && document.documentElement.classList.contains('theme-light')
   return (
-    <div className="flex items-center justify-between text-[11px]">
+    <div className="flex items-center justify-between text-base">
       <span className={isLight ? 'text-slate-500' : 'text-white/45'}>{label}</span>
       <div className="flex items-center gap-1">
         <span className={`${isLight ? 'text-slate-600' : 'text-white/60'} min-w-[22px] text-right`}>{a ?? '-'}</span>
         <ChevronRight size={12} className={isLight ? 'text-slate-400' : 'text-white/30'} />
         <span className={`${isLight ? 'text-emerald-600' : 'text-emerald-300'} min-w-[22px] text-left`}>{b ?? '-'}</span>
         {a != null && b != null && a !== b && (
-          <span className={`text-[10px] ${b - a >= 0 ? (isLight ? 'text-emerald-500' : 'text-emerald-400') : (isLight ? 'text-rose-500' : 'text-rose-400')}`}>{b - a >= 0 ? '+' : ''}{b - a}</span>
+          <span className={`text-sm ${b - a >= 0 ? (isLight ? 'text-emerald-500' : 'text-emerald-400') : (isLight ? 'text-rose-500' : 'text-rose-400')}`}>{b - a >= 0 ? '+' : ''}{b - a}</span>
         )}
       </div>
     </div>
@@ -986,7 +1184,7 @@ interface DiffSummaryAggregatedProps { graphDiff: GraphDiffLocal | null; tone: a
 function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) {
   const [open, setOpen] = useState(false)
   if (!graphDiff) {
-    return <div className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white/50 inline-block">暂无新增结构</div>
+    return <div className="text-sm px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white/50 inline-block">暂无新增结构</div>
   }
   const nodeKindsAgg: Record<string, number> = {}
   graphDiff.addedNodes.forEach((n: { id: string; kind: string }) => { nodeKindsAgg[n.kind] = (nodeKindsAgg[n.kind] || 0) + 1 })
@@ -997,7 +1195,7 @@ function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) 
   Object.entries(nodeKindsAgg).forEach(([k,v]) => badges.push({ label: `节点:${k}`, value: v, color: 'emerald' }))
   if (totalAddedMethods > 0) badges.push({ label: '方法行', value: totalAddedMethods, color: 'cyan' })
   Object.entries(edgeKindsAgg).forEach(([k,v]) => badges.push({ label: `边:${k}`, value: v, color: 'purple' }))
-  if (badges.length === 0) return <div className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white/50 inline-block">暂无新增结构</div>
+  if (badges.length === 0) return <div className="text-sm px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white/50 inline-block">暂无新增结构</div>
 
   const colorClass = (c: string) => {
     switch (c) {
@@ -1010,10 +1208,10 @@ function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) 
   return (
     <div className="flex flex-wrap gap-1 items-center">
       {badges.slice(0,6).map((b,i)=>(
-        <span key={i} className={`px-2 py-0.5 rounded-md border text-[10px] ${colorClass(b.color)}`}>{b.label} +{b.value}</span>
+        <span key={i} className={`px-2 py-0.5 rounded-md border text-sm ${colorClass(b.color)}`}>{b.label} +{b.value}</span>
       ))}
       {badges.length > 6 && (
-        <button type="button" onClick={()=>setOpen(true)} className="px-2 py-0.5 rounded-md border border-white/15 bg-white/10 text-[10px] text-white/65 hover:text-white/80">+更多 {badges.length - 6}</button>
+        <button type="button" onClick={()=>setOpen(true)} className="px-2 py-0.5 rounded-md border border-white/15 bg-white/10 text-sm text-white/65 hover:text-white/80">+更多 {badges.length - 6}</button>
       )}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1021,26 +1219,26 @@ function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) 
           <div className="relative w-full max-w-lg rounded-xl border border-white/15 bg-[#121a26] p-4 shadow-lg space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-white/80">新增结构详情</h4>
-              <button type="button" onClick={()=>setOpen(false)} className="text-xs px-2 py-1 rounded-md bg-white/10 text-white/70 hover:text-white">关闭</button>
+              <button type="button" onClick={()=>setOpen(false)} className="text-sm px-2 py-1 rounded-md bg-white/10 text-white/70 hover:text-white">关闭</button>
             </div>
             <div className="text-[10px] text-white/50">按种类聚合显示所有新增节点、方法行和边。原始 ID 列表用于深入分析。</div>
             <div className="max-h-[260px] overflow-auto space-y-2 pr-1">
               <div>
-                <div className="text-[11px] font-medium text-emerald-300 mb-1">新增节点列表</div>
+                <div className="text-sm font-medium text-emerald-300 mb-1">新增节点列表</div>
                 <div className="flex flex-wrap gap-1">
                   {graphDiff.addedNodes.map((n: { id: string; kind: string }) => <span key={n.id} className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-[10px] border border-emerald-400/30 text-emerald-200">{n.id}({n.kind})</span>)}
                   {graphDiff.addedNodes.length===0 && <span className="text-[10px] text-white/40">无</span>}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-medium text-cyan-300 mb-1">新增方法行 (按节点)</div>
+                <div className="text-sm font-medium text-cyan-300 mb-1">新增方法行 (按节点)</div>
                 <div className="flex flex-wrap gap-1">
                   {graphDiff.addedMethodRows.map((m: { nodeId: string; count: number }) => <span key={m.nodeId} className="px-1.5 py-0.5 rounded bg-cyan-500/15 text-[10px] border border-cyan-400/30 text-cyan-200">{m.nodeId} ×{m.count}</span>)}
                   {graphDiff.addedMethodRows.length===0 && <span className="text-[10px] text-white/40">无</span>}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-medium text-purple-300 mb-1">新增边列表</div>
+                <div className="text-sm font-medium text-purple-300 mb-1">新增边列表</div>
                 <div className="flex flex-wrap gap-1">
                   {graphDiff.addedEdges.map((e: { id: string; kind: string }) => <span key={e.id} className="px-1.5 py-0.5 rounded bg-purple-500/15 text-[10px] border border-purple-400/30 text-purple-200">{e.kind}</span>)}
                   {graphDiff.addedEdges.length===0 && <span className="text-[10px] text-white/40">无</span>}

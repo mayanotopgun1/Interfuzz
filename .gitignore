@@ -81,3 +81,23 @@ temp/
 *.pid
 *.seed
 *.pid.lock
+
+# Large resource files (download via deploy script)
+backend/jf-seeds/
+backend/temurin-17.0.7/
+
+# Generated files
+backend/batch_gen_seed/generated_tests_*
+backend/mutants/
+backend/some_zip/
+mutants/
+
+# Backup files
+*.backup.*
+
+# Large ZIP files in resources (keep .sha256 for verification)
+resources/*.zip
+
+# Temporary directories
+.temp-resources/
+.temp-extract/
