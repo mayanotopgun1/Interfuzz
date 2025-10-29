@@ -9,6 +9,11 @@ interface Props {
   onLoaded?: (summary: { nodes: number; edges: number; layoutMs: number }) => void
   labelDistance?: number
   resetSignal?: number
+  debugShowEdgeLabels?: boolean
+  /** 是否严格保持后端提供的原始 label，不做规范化覆盖 */
+  keepOriginalLabels?: boolean
+  /** 不同 kind 垂直偏移的基准间距；增大以更清晰区分 */
+  edgeKindGap?: number
 }
 
 export type GraphViewerHandle = {
@@ -17,7 +22,7 @@ export type GraphViewerHandle = {
   reset: () => void
 }
 
-const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.85 * window.innerHeight, onLoaded, labelDistance = 80, resetSignal }: Props, ref) => {
+const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.85 * window.innerHeight, onLoaded, labelDistance = 80, resetSignal, debugShowEdgeLabels = false, keepOriginalLabels = true, edgeKindGap = 14 }: Props, ref) => {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const [error, setError] = useState<string | null>(null)
   const zoomCtl = useRef<{ reset(): void; destroy(): void; scaleBy: (factor: number) => void } | null>(null)
@@ -107,12 +112,64 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         'interface-impl': 'dashed',
         'reference': 'dotted',
       }
-      // 深拷贝 edges（nodes 通常已满足结构，不做额外处理）
+      // 规格化标签：统一五类边的展示文字，多语言（英文+中文）便于理解
+      const canonicalLabelByKind: Record<string, { base: string; zh: string }> = {
+        'inheritance': { base: 'Inheritance', zh: '继承' },
+        'interface-impl': { base: 'Interface Implement', zh: '接口实现' },
+        'reference': { base: 'Reference', zh: '引用' },
+        'generic-bounds': { base: 'Generic Bounds', zh: '泛型约束' },
+        'nesting': { base: 'Nesting', zh: '嵌套' },
+      }
+      // 已存在的一些旧 label 变体，统一映射为规范
+      const variantToCanonical: Record<string, string> = {
+        'implementation': 'interface-impl',
+        'implements': 'interface-impl',
+        'interface implement': 'interface-impl',
+        'object creation': 'reference',
+        'instantiate': 'reference',
+        'instantiation': 'reference',
+        'method invocation': 'reference',
+        'inherit': 'inheritance',
+        'extension': 'inheritance',
+        'extend': 'inheritance',
+      }
+      // 若 label 缺失或为上述变体，则自动生成规范两行：英文 + 中文
+      const ensureLabel = (edge: any) => {
+        const kind = edge.kind
+        if (!kind) return
+        const canonical = canonicalLabelByKind[kind]
+        if (!canonical) return
+        const rawLabel: string = String(edge.label || '').trim()
+        // 如果选择保持原始标签并且已有内容，则不改动（但仍支持换行规范化由后面流程处理）
+        if (keepOriginalLabels && rawLabel) return
+        if (!rawLabel) {
+          edge.label = `${canonical.base}\n${canonical.zh}`
+          return
+        }
+        // 将 label 拆成小写 token 检查是否属于变体集合（单行或多行任意一行匹配）
+        const lines = rawLabel.split(/\r?\n/)
+        const normalizedTokens = lines.map(l => l.toLowerCase().trim())
+        const matchesVariant = normalizedTokens.some(t => variantToCanonical[t] === kind)
+        // 对 reference 进一步区分：如果包含 method invocation / object creation，可附加第二行中文描述
+        if (kind === 'reference') {
+          const isMethod = normalizedTokens.some(t => t.includes('method invocation'))
+          const isCreate = normalizedTokens.some(t => t.includes('object creation') || t.includes('instantiate'))
+          if (matchesVariant || isMethod || isCreate) {
+            const extra = isMethod ? '方法调用' : (isCreate ? '对象创建' : canonical.zh)
+            edge.label = `${canonical.base}\n${extra}`
+            return
+          }
+        }
+        if (matchesVariant) {
+          edge.label = `${canonical.base}\n${canonical.zh}`
+        }
+      }
+      // 深拷贝 edges，并剔除不需要的旧字段；同时对 nodes 去掉 size/position
       const edges = g.edges.map((e: any) => {
         const out = { ...e }
         if (!out.kind) {
           const k = semanticsToKind[String(out.semantics || '').toLowerCase()]
-          if (k) out.kind = k
+          out.kind = k || 'reference'
         }
         // style 归一化
         out.style = { ...(out.style || {}) }
@@ -130,9 +187,15 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
           if ((out as any).sourceMethodIndex != null && out.attach.sourceMethodIndex == null) out.attach.sourceMethodIndex = (out as any).sourceMethodIndex
           if ((out as any).targetMethodIndex != null && out.attach.targetMethodIndex == null) out.attach.targetMethodIndex = (out as any).targetMethodIndex
         }
+        // 标签规范化
+        ensureLabel(out)
         return out
       })
-      return { ...g, edges }
+      const nodes = (g.nodes || []).map((n: any) => {
+        const { size, position, ...rest } = n || {}
+        return { ...rest }
+      })
+      return { ...g, nodes, edges }
     }
 
     async function draw(data: GraphJSON) {
@@ -329,160 +392,14 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         return null
       }
 
-      const renderEdges = () => {
-        edgesG.selectAll('*').remove()
-
-        // 1) Prepare edge endpoints and grouping key (based on original ports)
-        type Prepared = {
-          e: (typeof edges)[number]
-          s: any
-          t: any
-          sIdx: number
-          tIdx: number
-          sPortY: number
-          tPortY: number
-          p0x: number
-          p3x: number
-          targetSide: 'east' | 'west'
-        }
-
-        const prepared: Prepared[] = []
-        for (const e of edges) {
-          const s = nodeById[e.source]
-          const t = nodeById[e.target]
-          if (!s || !t) continue
-          const attachSource = (e.attach?.source as any) || 'classRow'
-          const attachTarget = (e.attach?.target as any) || 'classRow'
-          // merge top-level row selectors for simplified schema support
-          const attachMerged = {
-            ...(e as any).attach,
-            sourceRow: (e as any).sourceRow ?? (e as any).attach?.sourceRow,
-            targetRow: (e as any).targetRow ?? (e as any).attach?.targetRow,
-            sourceMethodIndex: (e as any).sourceMethodIndex ?? (e as any).attach?.sourceMethodIndex,
-            targetMethodIndex: (e as any).targetMethodIndex ?? (e as any).attach?.targetMethodIndex,
-            sourceMatch: (e as any).sourceMatch ?? (e as any).attach?.sourceMatch,
-            targetMatch: (e as any).targetMatch ?? (e as any).attach?.targetMatch,
-          }
-          const sIdx = resolveRowIndex(s, attachSource, 'source', attachMerged)
-          const tIdx = resolveRowIndex(t, attachTarget, 'target', attachMerged)
-          const sPortY = s.y + (sIdx * s.rowH) + s.rowH / 2
-          const tPortY = t.y + (tIdx * t.rowH) + t.rowH / 2
-          const p0x = s.x + s.width
-          const targetSide = e.targetSide === 'east' ? 'east' : 'west'
-          const p3x = targetSide === 'east' ? (t.x + t.width) : t.x
-          prepared.push({ e, s, t, sIdx, tIdx, sPortY, tPortY, p0x, p3x, targetSide })
-        }
-
-        // 2) Group by identical original endpoints to distribute lane offsets
-        const groups = new Map<string, Prepared[]>()
-        for (const p of prepared) {
-          const key = `${p.p0x}|${p.sPortY}|${p.p3x}|${p.tPortY}`
-          const arr = groups.get(key)
-          if (arr) arr.push(p); else groups.set(key, [p])
-        }
-
-        // helper to generate symmetric offsets without 0 when n==2
-        const genOffsets = (n: number, gap: number) => {
-          if (n <= 1) return [0]
-          if (n === 2) return [-gap / 2, gap / 2]
-          const res: number[] = []
-          const half = Math.floor(n / 2)
-          for (let k = 1; k <= half; k++) {
-            res.push(-k * gap)
-            res.push(k * gap)
-          }
-          if (n % 2 === 1) res.splice(half, 0, 0)
-          return res
-        }
-
-        // Precompute lane offset per edge id
-        const laneById = new Map<string, number>()
-        for (const [, arr] of groups) {
-          // explicit overrides first
-          const explicit = arr.map((p) => ({ id: p.e.id, v: (p.e as any).laneOffset })).filter((x) => typeof x.v === 'number') as { id: string; v: number }[]
-          const implicitTargets = arr.filter((p) => typeof (p.e as any).laneOffset !== 'number')
-          const gap = (implicitTargets[0]?.e as any)?.laneGap ?? 6
-          const offs = genOffsets(implicitTargets.length, gap)
-          // stable order: sort by style line to keep dashed/solid consistent
-          implicitTargets.sort((a, b) => (a.e.style?.line || 'solid').localeCompare(b.e.style?.line || 'solid'))
-          implicitTargets.forEach((p, i) => laneById.set(p.e.id, offs[i] ?? 0))
-          explicit.forEach(({ id, v }) => laneById.set(id, v))
-        }
-
-        // 3) Render with lane offsets applied to source/target port y
-        prepared.forEach((p) => {
-          const e = p.e
-          const lane = laneById.get(e.id) ?? 0
-          const p0 = { x: p.p0x, y: p.sPortY + lane }
-          const p3 = { x: p.p3x, y: p.tPortY + lane }
-
-          const extend = (e as any).extendDistance ?? 80
-          const midX = p0.x + extend
-          const pts = [p0, { x: midX, y: p0.y }, { x: midX, y: p3.y }, p3]
-          const pathD = d3.line<any>().x((pt) => pt.x).y((pt) => pt.y)(pts as any) as string
-
-          const kindSty = edgeKindStyle((e as any).kind)
-          const stroke = kindSty?.stroke || colors.edgeStroke
-          const lineKind = kindSty?.line || e.style?.line
-          const marker = kindSty?.marker || e.style?.marker
-
-          edgesG.append('path')
-            .attr('d', pathD)
-            .attr('fill', 'none')
-            .attr('stroke', stroke)
-            .attr('stroke-width', 1.8)
-            .attr('stroke-dasharray', lineStyleToStrokeDasharray(lineKind) || null)
-            .attr('marker-end', marker === 'arrow' ? 'url(#arrow)' : null)
-
-          if (e.label) {
-            const fixedDist = ((e as any).labelDistanceFromSource ?? labelDistance ?? meta.layout?.labelDistanceFromSource ?? 30) as number
-            const seg1 = extend
-            const seg2 = Math.abs(p3.y - p0.y)
-            const seg3 = Math.max(0, Math.abs(p3.x - midX))
-            const total = seg1 + seg2 + seg3
-            const dfix = Math.min(fixedDist, Math.max(0, total - 1e-3))
-
-            let lx = p0.x, ly = p0.y
-            if (dfix <= seg1) {
-              lx = p0.x + dfix
-              ly = p0.y
-            } else if (dfix <= seg1 + seg2) {
-              const dd = dfix - seg1
-              const dir = p3.y >= p0.y ? 1 : -1
-              lx = midX
-              ly = p0.y + dir * dd
-            } else {
-              const dd = dfix - seg1 - seg2
-              const dir = p3.x >= midX ? 1 : -1
-              lx = midX + dir * dd
-              ly = p3.y
-            }
-
-            let dy = (e as any).labelDy ?? 0
-
-            const lines = String(e.label).split('\n')
-            lines.forEach((line, i) => {
-              edgesG.append('text')
-                .attr('x', lx)
-                .attr('y', ly + dy + i * 12)
-                .attr('text-anchor', 'middle')
-                .attr('font-size', 11)
-                .attr('fill', colors.edgeLabel)
-                .text(line)
-            })
-          }
-        })
-      }
-
-      renderEdges()
-
-      // 延迟悬停 tooltip（自定义浮层，仅针对截断文本）
-      const tooltip = d3.select(svg.node()!.parentElement)
+      // 单一 tooltip：用于节点截断文本 & 边标签悬停显示
+      d3.select(document.body).selectAll('div.graph-tooltip').remove()
+      const tooltip = d3.select(document.body)
         .append('div')
         .attr('class','graph-tooltip')
         .style('position','fixed')
         .style('pointer-events','none')
-        .style('z-index','60')
+        .style('z-index','9999')
         .style('background', isLight ? 'rgba(255,255,255,0.95)' : 'rgba(17,24,39,0.92)')
         .style('color', isLight ? '#0f172a' : '#f1f5f9')
         .style('font-size','11px')
@@ -490,31 +407,177 @@ const GraphViewer = forwardRef<GraphViewerHandle, Props>(({ dataUrl, height = 0.
         .style('border-radius','6px')
         .style('border', isLight ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.15)')
         .style('box-shadow', isLight ? '0 4px 12px rgba(0,0,0,0.08)' : '0 4px 12px rgba(0,0,0,0.45)')
+        .style('white-space','pre-line')
         .style('opacity','0')
       let hoverTimer: any = null
+      const normalizeMultiline = (text: string) => {
+        if (!text) return ''
+        // 将 '/n' 视为换行；也兼容反斜杠写法 '\n'
+        return String(text).replace(/\/(n)/g, '\n').replace(/\\n/g,'\n')
+      }
+      const showTooltipDelayed = (event: any, text: string) => {
+        if (hoverTimer) clearTimeout(hoverTimer)
+        const { clientX, clientY } = event
+        hoverTimer = setTimeout(()=>{
+          tooltip.style('left', (clientX + 12) + 'px')
+            .style('top', (clientY + 12) + 'px')
+            .style('opacity','1')
+            .text(normalizeMultiline(text))
+        }, 520)
+      }
+      const showEdgeLabelImmediate = (event: any, text: string) => {
+        if (hoverTimer) clearTimeout(hoverTimer)
+        tooltip.style('left', (event.clientX + 12) + 'px')
+          .style('top', (event.clientY + 12) + 'px')
+          .style('opacity','1')
+          .text(normalizeMultiline(text))
+      }
+      const hideTooltip = () => {
+        if (hoverTimer) clearTimeout(hoverTimer)
+        tooltip.style('opacity','0')
+      }
+
       svg.selectAll('text[data-full]')
         .on('mouseenter', function(event){
-          const target = d3.select(this)
-          const full = target.attr('data-full')
-          if (!full) return
-          if (hoverTimer) clearTimeout(hoverTimer)
-          const { clientX, clientY } = event
-          hoverTimer = setTimeout(()=>{
-            tooltip.style('left', (clientX + 12) + 'px')
-              .style('top', (clientY + 12) + 'px')
-              .style('opacity','1')
-              .text(full)
-          }, 520) // 延迟 ~520ms
+          const full = d3.select(this).attr('data-full')
+          if (full) showTooltipDelayed(event, full)
         })
         .on('mousemove', function(event){
           if (tooltip.style('opacity') === '1') {
             tooltip.style('left', (event.clientX + 12) + 'px').style('top', (event.clientY + 12) + 'px')
           }
         })
-        .on('mouseleave', function(){
-          if (hoverTimer) clearTimeout(hoverTimer)
-          tooltip.style('opacity','0')
+        .on('mouseleave', hideTooltip)
+
+      const renderEdges = () => {
+        edgesG.selectAll('*').remove()
+        // Prepared 边：仅使用节点左右侧中点，不再依据行(row)定位
+        type Prepared = {
+          e: (typeof edges)[number]
+          s: any
+          t: any
+          sCenterY: number
+          tCenterY: number
+          p0x: number
+          p3x: number
+        }
+        const prepared: Prepared[] = []
+        for (const e of edges) {
+          const s = nodeById[e.source]
+          const t = nodeById[e.target]
+          if (!s || !t) continue
+          const sCenterY = s.y + s.height / 2
+          const tCenterY = t.y + t.height / 2
+          // 源永远用右侧中点；目标侧：如果源在目标右侧，则也使用目标右侧中点，否则使用左侧中点
+          const p0x = s.x + s.width
+          const sourceIsRightOfTarget = s.x > t.x
+          const p3x = sourceIsRightOfTarget ? (t.x + t.width) : t.x
+          prepared.push({ e, s, t, sCenterY, tCenterY, p0x, p3x })
+        }
+        const groups = new Map<string, Prepared[]>()
+        for (const p of prepared) {
+          const key = `${p.p0x}|${p.sCenterY}|${p.p3x}|${p.tCenterY}`
+          const arr = groups.get(key)
+          if (arr) arr.push(p); else groups.set(key, [p])
+        }
+        // 垂直偏移策略：同一 endpoints 下，按 kind 分配偏移；同 kind 重叠(偏移=该 kind 的统一值)；仅不同 kind 之间产生对称偏移
+        const laneById = new Map<string, number>()
+        const symmetricOffsets = (count: number, gap: number) => {
+          if (count <= 1) return [0]
+          const arr: number[] = []
+          const mid = (count % 2 === 1) ? 0 : gap / 2
+          // 构造层级：0 层(可能)然后正负递增
+          if (count % 2 === 1) arr.push(0)
+          let layer = 1
+          while (arr.length < count) {
+            const up = layer * gap
+            const down = -layer * gap
+            // 保持对称：负值在前正值在后，使视觉排序自上而下与数组索引对应
+            if (arr.length < count) arr.unshift(down)
+            if (arr.length < count) arr.push(up)
+            layer++
+          }
+          // 如果偶数，当前 arr 两侧分布，需要微调使中心处不留空 (我们按构造已经均衡)
+          return arr.slice(0, count)
+        }
+        for (const [, arr] of groups) {
+          // 按 kind 聚合（undefined 作为 'unknown'）
+            const byKind = new Map<string, Prepared[]>()
+            for (const p of arr) {
+              const k = (p.e as any).kind ? String((p.e as any).kind) : 'unknown'
+              const list = byKind.get(k)
+              if (list) list.push(p); else byKind.set(k, [p])
+            }
+            const kinds = Array.from(byKind.keys())
+            // gap 可由第一条边的 laneGap 指定，否则默认 6
+            // 优先使用组件 prop edgeKindGap，其次使用边自带 laneGap，最后回退默认 14
+            const gapCfg = edgeKindGap ?? (arr[0]?.e as any)?.laneGap ?? 14
+            const kindOffsets = symmetricOffsets(kinds.length, gapCfg)
+            kinds.forEach((k, idx) => {
+              const offsetForKind = kindOffsets[idx] ?? 0
+              const list = byKind.get(k)!
+              list.forEach(p => {
+                const explicit = (p.e as any).laneOffset
+                laneById.set(p.e.id, (typeof explicit === 'number') ? explicit : offsetForKind)
+              })
+            })
+        }
+        prepared.forEach((p) => {
+          const e = p.e
+          const lane = laneById.get(e.id) ?? 0
+          const p0 = { x: p.p0x, y: p.sCenterY + lane }
+          const p3 = { x: p.p3x, y: p.tCenterY + lane }
+          const extend = (e as any).extendDistance ?? 80
+          // 保持原有折线风格：水平 -> 垂直 -> 水平
+          const midX = p0.x + extend
+          const pts = [p0, { x: midX, y: p0.y }, { x: midX, y: p3.y }, p3]
+          const pathD = d3.line<any>().x((pt) => pt.x).y((pt) => pt.y)(pts as any) as string
+          const kindSty = edgeKindStyle((e as any).kind)
+          const stroke = kindSty?.stroke || colors.edgeStroke
+          const lineKind = kindSty?.line || e.style?.line
+          const markerKind = kindSty?.marker || e.style?.marker
+          const visiblePath = edgesG.append('path')
+            .attr('d', pathD)
+            .attr('fill', 'none')
+            .attr('stroke', stroke)
+            .attr('stroke-width', 1.8)
+            .attr('stroke-dasharray', lineStyleToStrokeDasharray(lineKind) || null)
+            .attr('marker-end', markerKind === 'arrow' ? 'url(#arrow)' : null)
+            .attr('data-edge-id', e.id)
+          const hit = edgesG.append('path')
+            .attr('d', pathD)
+            .attr('fill', 'none')
+            .attr('stroke', 'transparent')
+            .attr('stroke-width', 14)
+            .style('pointer-events','stroke')
+            .style('cursor', e.label ? 'pointer' : 'default')
+            .attr('data-edge-hit', e.id)
+          if (e.label) {
+            hit.on('mouseenter', (event: any) => showEdgeLabelImmediate(event, String(e.label)))
+              .on('mousemove', (event: any) => {
+                if (tooltip.style('opacity') === '1') {
+                  tooltip.style('left', (event.clientX + 12) + 'px').style('top', (event.clientY + 12) + 'px')
+                }
+              })
+              .on('mouseleave', hideTooltip)
+          }
+          if (debugShowEdgeLabels && e.label) {
+            const midIndex = Math.floor(pts.length / 2)
+            const midPt = pts[midIndex]
+            edgesG.append('text')
+              .attr('x', midPt.x)
+              .attr('y', midPt.y - 6)
+              .attr('text-anchor', 'middle')
+              .attr('font-size', 10)
+              .attr('fill', colors.edgeLabel)
+              .text(normalizeMultiline(String(e.label)))
+          }
         })
+      }
+
+      // drag 等场景会多次调用 renderEdges()
+      // 初始绘制（之前遗漏导致边未渲染）
+      renderEdges()
 
       // drag behavior for nodes: update position and redraw edges
       const dragBehavior = d3.drag<SVGGElement, any>()
