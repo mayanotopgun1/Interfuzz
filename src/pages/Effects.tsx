@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { detectedBugs, summarize, type BugRecord } from '../data/detected-bugs'
 import { caseStudies } from '../data/case-studies'
 import CaseStudyCard from '../components/CaseStudyCard'
+import { TrendingUp, BarChart3, Award } from 'lucide-react'
 
 export default function Effects() {
   const bugs = detectedBugs
@@ -27,6 +28,119 @@ export default function Effects() {
           <BarCard title="按编译器" data={stats.byCompiler as any} colors={{ HotSpot: '#60a5fa', ART: '#34d399', R8: '#fbbf24' }} />
           <BarCard title="按状态" data={stats.byStatus as any} colors={{ Fixed: '#34d399', Confirmed: '#60a5fa', Duplicate: '#a78bfa' }} />
           <BarCard title="按优先级" data={stats.byPriority as any} colors={{ P1: '#f87171', P2: '#fb923c', P3: '#fbbf24', P4: '#a3e635' }} />
+        </div>
+      </section>
+
+      {/* Comparison with Baseline Tools */}
+      <section className="card">
+        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <TrendingUp className="text-emerald-400" size={22} />
+          与现有 Java 编译器测试工具对比
+        </h3>
+        <p className="text-white/70 mb-6 text-base">
+          在相同实验条件下，我们将 InterFuzz 与 MopFuzzer、Artemis、Jetris 和 JITFuzz 等四个主流 Java 编译器测试工具进行了对比实验。
+        </p>
+
+        {/* Coverage Comparison */}
+        <div className="mb-6">
+          <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+            <BarChart3 size={18} className="text-emerald-400" />
+            代码覆盖率对比
+          </h4>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-sky-500/5 border border-sky-500/30 p-4">
+              <div className="text-sm text-white/70 mb-2">HotSpot</div>
+              <div className="text-3xl font-bold text-sky-400 mb-2">43.2%</div>
+              <div className="text-xs text-white/60">InterFuzz 覆盖率</div>
+            </div>
+            <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/30 p-4">
+              <div className="text-sm text-white/70 mb-2">ART</div>
+              <div className="text-3xl font-bold text-emerald-400 mb-2">51.0%</div>
+              <div className="text-xs text-emerald-300">InterFuzz 覆盖率 · 最高</div>
+            </div>
+            <div className="rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/30 p-4">
+              <div className="text-sm text-white/70 mb-2">R8</div>
+              <div className="text-3xl font-bold text-amber-400 mb-2">55.2%</div>
+              <div className="text-xs text-amber-300">InterFuzz 覆盖率 · 最高</div>
+              <div className="text-xs text-emerald-300 mt-1">比最佳baseline高9.7%</div>
+            </div>
+          </div>
+          <div className="mt-3 text-sm text-white/70">
+            <p>在注重类间结构分析的 ART 和 R8 编译器上，InterFuzz 达到了最高覆盖率，分别较最佳baseline高出约 8.4% 和 14.0%。</p>
+          </div>
+        </div>
+
+        {/* Bug Detection Comparison */}
+        <div className="mb-6">
+          <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+            <Award size={18} className="text-emerald-400" />
+            漏洞检测能力对比
+          </h4>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/20">
+                  <th className="text-left py-3 px-4 font-semibold text-white">编译器</th>
+                  <th className="text-center py-3 px-4 font-semibold text-emerald-400">InterFuzz</th>
+                  <th className="text-center py-3 px-4 font-semibold text-blue-300">MopFuzzer</th>
+                  <th className="text-center py-3 px-4 font-semibold text-blue-300">Artemis</th>
+                  <th className="text-center py-3 px-4 font-semibold text-blue-300">Jetris</th>
+                  <th className="text-center py-3 px-4 font-semibold text-blue-300">JITFuzz</th>
+                </tr>
+              </thead>
+              <tbody className="text-white/80">
+                <tr className="border-b border-white/10 hover:bg-white/5">
+                  <td className="py-3 px-4 font-semibold text-white">HotSpot</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-400">2 (2)</td>
+                  <td className="py-3 px-4 text-center">3 (0)</td>
+                  <td className="py-3 px-4 text-center">3 (0)</td>
+                  <td className="py-3 px-4 text-center">2 (0)</td>
+                  <td className="py-3 px-4 text-center">1 (0)</td>
+                </tr>
+                <tr className="border-b border-white/10 hover:bg-white/5">
+                  <td className="py-3 px-4 font-semibold text-white">ART</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-400">2 (2)</td>
+                  <td className="py-3 px-4 text-center">1 (0)</td>
+                  <td className="py-3 px-4 text-center">0 (0)</td>
+                  <td className="py-3 px-4 text-center">1 (0)</td>
+                  <td className="py-3 px-4 text-center">0 (0)</td>
+                </tr>
+                <tr className="border-b border-white/10 hover:bg-white/5">
+                  <td className="py-3 px-4 font-semibold text-white">R8</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-400">3 (3)</td>
+                  <td className="py-3 px-4 text-center">0 (0)</td>
+                  <td className="py-3 px-4 text-center">1 (0)</td>
+                  <td className="py-3 px-4 text-center">0 (0)</td>
+                  <td className="py-3 px-4 text-center">0 (0)</td>
+                </tr>
+                <tr className="bg-emerald-500/5 border-t-2 border-emerald-500/30">
+                  <td className="py-3 px-4 font-bold text-white">总计</td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-400">7 (7)</td>
+                  <td className="py-3 px-4 text-center">4 (0)</td>
+                  <td className="py-3 px-4 text-center">4 (0)</td>
+                  <td className="py-3 px-4 text-center">3 (0)</td>
+                  <td className="py-3 px-4 text-center">1 (0)</td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="mt-3 text-xs text-white/50">
+              注：括号内数字表示检测到的类间结构相关漏洞数量
+            </div>
+          </div>
+          <div className="mt-6">
+            <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-2 border-emerald-500/30 p-6">
+              <h5 className="font-bold text-lg text-emerald-300 mb-3 flex items-center gap-2">
+                <Award size={22} className="text-emerald-400" />
+                核心结论
+              </h5>
+              <p className="text-lg font-bold text-white leading-relaxed">
+                <span className="text-emerald-400">InterFuzz 在类间结构缺陷检测方面明显优于现有的最新 Java 编译器测试工具。</span>
+              </p>
+              <p className="text-sm text-white/70 mt-3">
+                InterFuzz 检测到的 7 个漏洞（HotSpot 2个、ART 2个、R8 3个）均与复杂类间结构相关，而其他工具检测到的漏洞均不涉及类间结构。
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
