@@ -60,7 +60,7 @@ export default function App() {
           </Link>
           <nav className="flex items-center gap-2">
             <NavLink to="/" label="首页" icon={HomeIcon} />
-            <NavLink to="/principle" label="原理" icon={BookOpen} />
+            <NavLink to="/principle" label="工具介绍" icon={BookOpen} />
             <NavLink to="/demo" label="种子生成" icon={PlaySquare} />
             <NavLink to="/effects" label="效果展示" icon={Bug} />
             <NavLink to="/about" label="关于我们" icon={Users} />
@@ -80,7 +80,9 @@ export default function App() {
               <span className="text-xs">{theme === 'light' ? '浅色' : '深色'}</span>
             </button>
             <a
-              href="#"
+              href="https://github.com/mayanotopgun1/Interfuzz"
+              target="_blank"
+              rel="noopener noreferrer"
               aria-label="GitHub 仓库"
               className={
                 theme === 'light'
@@ -99,7 +101,8 @@ export default function App() {
         </div>
       </main>
       <footer className="relative mx-auto max-w-7xl px-4 pb-10 text-xs text-white/50">
-        主要技术与数据依据来源：InterFuzz 论文
+        <p>主要技术与数据依据来源：</p>
+        <p>Shiyu Qiu, Ming Wen, Zifan Xie, Hai Jin. Fuzzing Java Optimizing Compilers with Complex Inter-Class Structures Guided by Heterogeneous Program Graphs. In The International Conference on Software Engineering (ICSE), 2026. (CCF-A)</p>
       </footer>
     </div>
   )

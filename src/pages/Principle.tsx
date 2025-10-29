@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
+import ThemedImage from '../components/ThemedImage'
 import { BookOpen, AlertTriangle, Layers, Wand2, Gauge, BarChart3, CheckCircle2 } from 'lucide-react'
 
 type PrincipleItem = {
@@ -9,75 +10,26 @@ type PrincipleItem = {
 }
 
 export default function Principle() {
-  // 检测当前主题
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return !document.documentElement.classList.contains('theme-light')
-  })
-  
-  useEffect(() => {
-    const checkTheme = () => {
-      setIsDark(!document.documentElement.classList.contains('theme-light'))
-    }
-    
-    const observer = new MutationObserver(checkTheme)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    })
-    
-    return () => observer.disconnect()
-  }, [])
-
-  const glossary = useMemo(() => ([
-    { key: 'jit', term: 'JIT', desc: 'Just-In-Time 即时编译器：运行时动态优化热点代码，如 HotSpot。' },
-    { key: 'aot', term: 'AOT', desc: 'Ahead-Of-Time 提前编译器：构建阶段静态分析优化，如 R8。' },
-    { key: 'hpg', term: 'HPG', desc: 'Heterogeneous Program Graph：异构程序图，统一表达跨类结构的图模型。' },
-    { key: 'interclass', term: '跨类结构', desc: '类之间的关系：继承、接口实现、嵌套、泛型约束、引用等。' },
-    { key: 'mutator', term: '变异算子', desc: '在图上执行原子操作（添加节点/边、修改属性）以生成新测试用例。' },
-    { key: 'complexity', term: '图复杂度', desc: '基于节点度数、边类型多样性、层级深度等指标评估程序结构复杂度。' },
-  ]), [])
-  const [openGlossaryKey, setOpenGlossaryKey] = useState<string | null>(null)
-  const [glossaryVisible, setGlossaryVisible] = useState<boolean>(false)
-  const [glossaryQuery, setGlossaryQuery] = useState<string>('')
-  const filteredGlossary = useMemo(() => {
-    const q = glossaryQuery.trim().toLowerCase()
-    if (!q) return glossary
-      return glossary.filter(g =>
-      g.term.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q)
-    )
-  }, [glossary, glossaryQuery])
-
-  // 根据主题返回图片路径的辅助函数
-  const getImagePath = (baseName: string, extension: string = 'png') => {
-    if (isDark) {
-      // dark 版本都是 .jpg
-      return `/${baseName}-dark.jpg`
-    }
-    return `/${baseName}.${extension}`
-  }
-
   const items: PrincipleItem[] = useMemo(() => [
     {
       id: 'background',
       title: '背景与动机',
       hint: 'Java 编译器 · 优化挑战',
       render: () => (
-        <section className="card route-in">
+        <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">背景与动机</h2>
-            <span className="badge">ICSE 2026</span>
+            <h2 className="text-3xl font-semibold mb-2">背景与动机</h2>
           </div>
 
           <div className="space-y-4">
             {/* 1. 编译器测试的重要性 */}
             <div className="rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 p-4">
-              <h3 className="font-semibold mb-3 text-indigo-300 flex items-center gap-2">
+              <h3 className="font-semibold mb-3 text-indigo-300 flex items-center gap-2 text-xl">
                 <AlertTriangle size={18} />
                 <span>为什么编译器测试如此重要？</span>
               </h3>
               <div className="space-y-3">
-                <p className="text-white/80 text-sm leading-relaxed">
+                <p className="text-white/80 text-base leading-relaxed">
                   编译器是软件生态系统的<strong className="text-white">基础设施</strong>，
                   它的正确性直接影响数百万应用程序的可靠性。一个编译器缺陷可能导致：
                 </p>
@@ -86,9 +38,9 @@ export default function Principle() {
                   <div className="rounded-lg bg-white/5 border border-red-500/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xl">🔴</span>
-                      <h4 className="font-semibold text-red-300 text-sm">安全漏洞</h4>
+                      <h4 className="font-semibold text-red-300 text-base">安全漏洞</h4>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       优化错误可能破坏安全检查逻辑，导致认证绕过、权限提升等严重安全问题，
                       影响使用该编译器的所有应用
                     </p>
@@ -97,9 +49,9 @@ export default function Principle() {
                   <div className="rounded-lg bg-white/5 border border-orange-500/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xl">🟠</span>
-                      <h4 className="font-semibold text-orange-300 text-sm">性能退化</h4>
+                      <h4 className="font-semibold text-orange-300 text-base">性能退化</h4>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       错误的优化可能使程序运行变慢，甚至导致死循环，
                       影响用户体验和系统资源消耗
                     </p>
@@ -108,9 +60,9 @@ export default function Principle() {
                   <div className="rounded-lg bg-white/5 border border-amber-500/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xl">🟡</span>
-                      <h4 className="font-semibold text-amber-300 text-sm">功能异常</h4>
+                      <h4 className="font-semibold text-amber-300 text-base">功能异常</h4>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       语义错误会导致程序行为与预期不符，产生错误的计算结果、
                       数据损坏或业务逻辑失效
                     </p>
@@ -119,9 +71,9 @@ export default function Principle() {
                   <div className="rounded-lg bg-white/5 border border-purple-500/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xl">🟣</span>
-                      <h4 className="font-semibold text-purple-300 text-sm">难以调试</h4>
+                      <h4 className="font-semibold text-purple-300 text-base">难以调试</h4>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       编译器缺陷导致的问题往往难以定位，开发者可能花费大量时间
                       排查应用代码，而根本原因在编译器
                     </p>
@@ -129,7 +81,7 @@ export default function Principle() {
                 </div>
                 
                 <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-indigo-500/20 to-blue-500/20 border border-indigo-500/30">
-                  <p className="text-white/90 text-sm leading-relaxed">
+                  <p className="text-white/90 text-base leading-relaxed">
                     <strong className="text-indigo-200">💡 关键洞察：</strong>
                     编译器位于软件栈的底层，其缺陷具有<strong className="text-white">"乘数效应"</strong>——
                     一个编译器 Bug 会被复制到所有使用它编译的程序中。
@@ -141,7 +93,7 @@ export default function Principle() {
 
             {/* 2. Java 编译器与优化 */}
             <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-purple-500/10 border border-white/10 p-4">
-              <h3 className="font-semibold mb-2 text-white flex items-center gap-2">
+              <h3 className="font-semibold mb-2 text-white flex items-center gap-2 text-xl">
                 <BookOpen size={18} className="text-sky-400" />
                 <span>Java 编译器与优化技术</span>
               </h3>
@@ -154,29 +106,29 @@ export default function Principle() {
 
               <div className="grid md:grid-cols-3 gap-3">
                 <div className="rounded-xl bg-white/5 border border-sky-500/20 p-3 hover:border-sky-500/40 transition-all">
-                  <div className="text-sm font-semibold text-sky-400 mb-2 flex items-center gap-1">
+                  <div className="text-base font-semibold text-sky-400 mb-2 flex items-center gap-1">
                     <span>⚡</span>
                     <span>JIT 编译器</span>
                   </div>
-                  <p className="text-xs text-white/75 leading-relaxed">
+                  <p className="text-sm text-white/75 leading-relaxed">
                     如 <strong className="text-white">HotSpot</strong>，在程序运行过程中动态地对"热点代码"进行优化
                   </p>
                 </div>
                 <div className="rounded-xl bg-white/5 border border-purple-500/20 p-3 hover:border-purple-500/40 transition-all">
-                  <div className="text-sm font-semibold text-purple-400 mb-2 flex items-center gap-1">
+                  <div className="text-base font-semibold text-purple-400 mb-2 flex items-center gap-1">
                     <span>🎯</span>
                     <span>AOT 编译器</span>
                   </div>
-                  <p className="text-xs text-white/75 leading-relaxed">
+                  <p className="text-sm text-white/75 leading-relaxed">
                     如 <strong className="text-white">R8</strong>，在构建阶段执行静态分析和优化，减少应用体积、混淆代码并增强安全性
                   </p>
                 </div>
                 <div className="rounded-xl bg-white/5 border border-pink-500/20 p-3 hover:border-pink-500/40 transition-all">
-                  <div className="text-sm font-semibold text-pink-400 mb-2 flex items-center gap-1">
+                  <div className="text-base font-semibold text-pink-400 mb-2 flex items-center gap-1">
                     <span>🔄</span>
                     <span>混合策略</span>
                   </div>
-                  <p className="text-xs text-white/75 leading-relaxed">
+                  <p className="text-sm text-white/75 leading-relaxed">
                     如 <strong className="text-white">ART</strong>，在安装时使用 AOT 编译，在运行时结合 JIT 优化
                   </p>
                 </div>
@@ -185,7 +137,7 @@ export default function Principle() {
 
             {/* 3. 什么是跨类结构 */}
             <div className="border-l-4 border-sky-500/50 pl-4 py-3 bg-sky-500/5 rounded-r-lg">
-              <h3 className="font-semibold mb-2 text-white flex items-center gap-2">
+              <h3 className="font-semibold mb-2 text-white flex items-center gap-2 text-xl">
                 <Layers size={18} className="text-sky-400" />
                 <span>什么是跨类结构（Inter-Class Structures）？</span>
               </h3>
@@ -195,34 +147,34 @@ export default function Principle() {
                 这些机制实现了代码复用、抽象和多态等核心特性。
               </p>
               <div className="flex flex-wrap gap-2 mb-3">
-                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Inheritance 继承</span>
-                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Interface 接口</span>
-                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Nesting 嵌套</span>
-                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Generics 泛型</span>
-                <span className="px-2 py-1 rounded-md bg-white/10 text-xs text-white/90 font-mono">Reference 引用</span>
+                <span className="px-2 py-1 rounded-md bg-white/10 text-sm text-white/90 font-mono">Inheritance 继承</span>
+                <span className="px-2 py-1 rounded-md bg-white/10 text-sm text-white/90 font-mono">Interface Implementation 接口实现</span>
+                <span className="px-2 py-1 rounded-md bg-white/10 text-sm text-white/90 font-mono">Nesting 嵌套</span>
+                <span className="px-2 py-1 rounded-md bg-white/10 text-sm text-white/90 font-mono">Generic Bounds 泛型</span>
+                <span className="px-2 py-1 rounded-md bg-white/10 text-sm text-white/90 font-mono">Reference 引用</span>
               </div>
-              <div className="flex justify-center">
-                <div className="w-2/3">
-                  <img 
-                    src={getImagePath('5-inter-class-structures')} 
-                    alt="五种类间结构示例" 
-                    className="w-full object-contain rounded-lg"
-                  />
-                  <div className="mt-2 text-center text-xs text-white/60 font-medium py-1 rounded">
-                    图1: InterFuzz 关注的五种核心类间结构
-                  </div>
+              <div className="rounded-xl overflow-hidden border-2 border-white/20 p-2 hover:border-white/40 transition-all duration-300 shadow-lg themed-surface">
+                <ThemedImage
+                  lightSrc="/5-inter-class-structures-light.png"
+                  darkSrc="/5-inter-class-structures-dark.jpg"
+                  alt="五种类间结构示例"
+                  className="w-full object-contain rounded-lg"
+                  style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
+                />
+                <div className="mt-2 text-center text-sm font-medium caption-surface py-1 rounded">
+                  图1: InterFuzz 关注的五种核心类间结构
                 </div>
               </div>
             </div>
 
             {/* 4. 跨类结构的重要性与实证分析 */}
             <div className="rounded-xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 border border-violet-500/20 p-4">
-              <h3 className="font-semibold mb-3 text-violet-300 flex items-center gap-2">
+              <h3 className="font-semibold mb-3 text-violet-300 flex items-center gap-2 text-xl">
                 <span>🎯</span>
                 <span>跨类结构：被忽视的测试盲区</span>
               </h3>
               <div className="space-y-3">
-                <p className="text-white/80 text-sm leading-relaxed">
+                <p className="text-white/80 text-base leading-relaxed">
                   传统的编译器测试往往聚焦于<strong className="text-white">类内或方法内</strong>的优化场景，
                   而对<strong className="text-violet-300">跨类结构</strong>的覆盖严重不足。
                   为了验证这一观察，我们对三大主流 Java 编译器的<strong className="text-white">历史缺陷</strong>进行了系统性的实证分析。
@@ -230,11 +182,11 @@ export default function Principle() {
                 
                 {/* 研究范围 */}
                 <div className="rounded-lg bg-gradient-to-r from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 p-3">
-                  <div className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                  <div className="text-base font-semibold text-indigo-300 mb-2 flex items-center gap-2">
                     <span>📊</span>
                     <span>实证分析范围</span>
                   </div>
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2 p-2 rounded bg-white/5">
                       <span className="text-indigo-400 shrink-0">•</span>
                       <div className="text-white/70 leading-relaxed">
@@ -254,7 +206,7 @@ export default function Principle() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-white/60 mt-2 leading-relaxed">
+                  <p className="text-sm text-white/60 mt-2 leading-relaxed">
                     对每个缺陷，我们分析其<strong className="text-white">触发测试用例</strong>，
                     识别是否涉及跨类结构（继承、接口、嵌套、泛型、引用）相关的优化错误。
                   </p>
@@ -262,28 +214,28 @@ export default function Principle() {
 
                 {/* 统计结果 */}
                 <div className="rounded-lg bg-gradient-to-r from-rose-500/10 to-red-500/10 border border-rose-500/30 p-4">
-                  <div className="text-sm font-semibold text-rose-300 mb-3 flex items-center gap-2">
+                  <div className="text-base font-semibold text-rose-300 mb-3 flex items-center gap-2">
                     <span>📈</span>
                     <span>统计结果：跨类结构相关缺陷占比</span>
                   </div>
                   <div className="grid md:grid-cols-3 gap-3">
                     <div className="text-center p-3 rounded-lg bg-white/5 border border-rose-500/20 hover:border-rose-500/40 transition-all">
-                      <div className="text-xs text-rose-300 mb-1">R8 (AOT)</div>
+                      <div className="text-sm text-rose-300 mb-1">R8 (AOT)</div>
                       <div className="text-4xl font-bold text-rose-200 mb-1">76.4%</div>
-                      <div className="text-xs text-white/60">跨类结构相关</div>
+                      <div className="text-sm text-white/60">跨类结构相关</div>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-white/5 border border-orange-500/20 hover:border-orange-500/40 transition-all">
-                      <div className="text-xs text-orange-300 mb-1">ART (Hybrid)</div>
+                      <div className="text-sm text-orange-300 mb-1">ART (Hybrid)</div>
                       <div className="text-4xl font-bold text-orange-200 mb-1">68.2%</div>
-                      <div className="text-xs text-white/60">跨类结构相关</div>
+                      <div className="text-sm text-white/60">跨类结构相关</div>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-white/5 border border-amber-500/20 hover:border-amber-500/40 transition-all">
-                      <div className="text-xs text-amber-300 mb-1">HotSpot (JIT)</div>
+                      <div className="text-sm text-amber-300 mb-1">HotSpot (JIT)</div>
                       <div className="text-4xl font-bold text-amber-200 mb-1">61.5%</div>
-                      <div className="text-xs text-white/60">跨类结构相关</div>
+                      <div className="text-sm text-white/60">跨类结构相关</div>
                     </div>
                   </div>
-                  <p className="text-white/80 text-xs text-center mt-3 leading-relaxed">
+                  <p className="text-white/80 text-sm text-center mt-3 leading-relaxed">
                     在三种不同类型的编译器中，<strong className="text-white">超过 60% 的优化缺陷</strong>
                     与跨类结构的处理直接相关，这一发现在 AOT、JIT、Hybrid 编译器中具有
                     <strong className="text-white">普遍性和一致性</strong>
@@ -296,7 +248,7 @@ export default function Principle() {
                       <span>📈</span>
                       <span>现实代码复杂度</span>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       真实的 Java 应用大量使用跨类结构来组织代码。
                       框架（如 Spring）、设计模式、依赖注入等都依赖复杂的跨类关系，
                       而这些场景很少被现有测试工具覆盖
@@ -308,7 +260,7 @@ export default function Principle() {
                       <span>🐛</span>
                       <span>缺陷高发区域</span>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       实证研究证实，跨类结构是编译器优化的<strong className="text-white">高风险区域</strong>。
                       其中 R8 的占比最高（76.4%），这与其激进的 AOT 优化策略密切相关
                     </p>
@@ -319,7 +271,7 @@ export default function Principle() {
                       <span>🔬</span>
                       <span>触发模式分析</span>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       多数触发程序包含 <strong className="text-white">2-5 个紧密耦合的类</strong>，
                       其中继承、接口实现、引用是最常见的触发结构，
                       这些复杂关系能触发更深层的优化路径
@@ -331,7 +283,7 @@ export default function Principle() {
                       <span>⚡</span>
                       <span>优化分析挑战</span>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-sm text-white/70 leading-relaxed">
                       编译器在处理跨类的依赖关系和执行顺序时，
                       若分析模型不足以捕捉复杂的跨类交互，
                       就极易引发错误优化
@@ -362,27 +314,27 @@ export default function Principle() {
                 <code className="px-1.5 py-0.5 rounded bg-white/10 text-sky-300 font-mono">C2</code>，
                 它们之间通过<strong className="text-white">静态字段和初始化块</strong>发生交互。
               </p>
-              <div className="flex justify-center">
-                <div className="w-2/3">
-                  <img 
-                    src={getImagePath('motivating-example')} 
-                    alt="HotSpot JIT 优化错误示例" 
-                    className="w-full object-contain rounded-lg"
-                  />
-                  <div className="mt-2 text-center text-xs text-white/60 font-medium py-1 rounded">
-                    图2: 复杂类间交互导致的编译器优化错误
-                  </div>
+              <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 p-3 hover:border-amber-500/60 transition-all duration-300 shadow-lg themed-surface">
+                <ThemedImage
+                  lightSrc="/motivating-example-light.png"
+                  darkSrc="/motivating-example-dark.jpg"
+                  alt="HotSpot JIT 优化错误示例"
+                  className="w-full object-contain rounded-lg"
+                  style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
+                />
+                <div className="mt-2 text-center text-sm font-medium bg-amber-500/10 text-amber-300 py-1 rounded">
+                  图2: 复杂类间交互导致的编译器优化错误
                 </div>
               </div>
               <div className="mt-3 space-y-2">
-                <div className="flex items-start gap-2 text-sm">
+                <div className="flex items-start gap-2 text-base">
                   <span className="text-amber-400 shrink-0">①</span>
                   <p className="text-white/75 leading-relaxed">
                     <code className="px-1.5 py-0.5 rounded bg-white/10 text-sky-300 font-mono">C1</code> 
                     在构造函数中创建 <code className="px-1.5 py-0.5 rounded bg-white/10 text-sky-300 font-mono">C2</code> 的实例（第 3 行）
                   </p>
                 </div>
-                <div className="flex items-start gap-2 text-sm">
+                <div className="flex items-start gap-2 text-base">
                   <span className="text-amber-400 shrink-0">②</span>
                   <p className="text-white/75 leading-relaxed">
                     <code className="px-1.5 py-0.5 rounded bg-white/10 text-sky-300 font-mono">C2</code> 
@@ -390,7 +342,7 @@ export default function Principle() {
                     <code className="px-1.5 py-0.5 rounded bg-white/10 text-sky-300 font-mono">C1.str</code>
                   </p>
                 </div>
-                <div className="flex items-start gap-2 text-sm">
+                <div className="flex items-start gap-2 text-base">
                   <span className="text-rose-400 shrink-0">⚠️</span>
                   <p className="text-white/75 leading-relaxed">
                     <strong className="text-rose-300">优化错误</strong>：HotSpot 的 JIT 优化器错误地假设 
@@ -410,7 +362,7 @@ export default function Principle() {
               </h3>
               
               <div className="space-y-3">
-                <p className="text-white/80 text-sm leading-relaxed">
+                <p className="text-white/80 text-base leading-relaxed">
                   该示例揭示出一个关键问题：<strong className="text-white">编译器在处理跨类的依赖关系和执行顺序时，
                   若分析模型不足以捕捉复杂的类间交互，就极易引发错误优化</strong>。
                 </p>
@@ -418,70 +370,84 @@ export default function Principle() {
                   <div className="text-center mb-2">
                     <span className="text-4xl font-bold text-rose-200">76.4%</span>
                   </div>
-                  <p className="text-white/90 text-sm text-center leading-relaxed">
+                  <p className="text-white/90 text-base text-center leading-relaxed">
                     通过对历史缺陷的统计分析发现，在 R8 编译器的缺陷案例中，有 <strong className="text-rose-200">76.4% 的错误</strong> 
                     仅能在具有复杂类间结构的测试程序中被触发。
                   </p>
                 </div>
-                <p className="text-white/90 font-medium text-sm bg-gradient-to-r from-rose-500/20 to-transparent p-3 rounded-lg">
+                <p className="text-white/90 font-medium text-base bg-gradient-to-r from-rose-500/20 to-transparent p-3 rounded-lg">
                   💡 这表明：验证 Java 优化编译器在复杂类间结构下的正确性，<strong className="text-white">不仅重要，而且迫切</strong>。
                 </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )
-    },
-    {
-      id: 'challenges',
-      title: '现有方法的局限',
-      hint: '生成 · 变异 · 搜索',
-      render: () => (
-        <section className="card route-in">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">现有模糊测试方法的局限</h2>
-            <span className="badge">挑战</span>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-              <p className="text-white/80 text-base leading-relaxed mb-3">
-                当前的 Java 编译器模糊测试主要分为<strong className="text-white">生成式（generation-based）</strong>
-                和<strong className="text-white">变异式（mutation-based）</strong>两类方法。
-                但这两类方法大多聚焦于<strong className="text-sky-300">类内（intra-class）</strong>或
-                <strong className="text-sky-300">方法内（intra-method）</strong>的结构，
-                难以生成拥有复杂类间关系的多类程序。
-              </p>
-              
-              <div className="grid md:grid-cols-2 gap-3">
-                <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-transparent border border-sky-500/20 p-3">
-                  <div className="text-sm font-semibold text-sky-400 mb-2">生成式方法</div>
-                  <p className="text-xs text-white/70 leading-relaxed mb-2">
-                    主要测试单类结构或特定的 JVM 优化场景
+                
+                {/* 现有方法局限性 */}
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <h4 className="text-base font-semibold text-violet-300 mb-3">那么，现有的编译器测试方法能否胜任？</h4>
+                  <p className="text-white/80 text-base leading-relaxed mb-3">
+                    当前的 Java 编译器模糊测试主要分为<strong className="text-white">生成式（generation-based）</strong>
+                    和<strong className="text-white">变异式（mutation-based）</strong>两类方法。
+                    然而，这些方法在生成复杂跨类结构方面存在显著局限。
                   </p>
-                  <div className="flex flex-wrap gap-1">
-                    <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70">JITFuzz (ICSE'23)</span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70">MopFuzzer (ASPLOS'24)</span>
+                  
+                  <div className="grid md:grid-cols-2 gap-3 mb-3">
+                    <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-transparent border border-sky-500/20 p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">📝</span>
+                        <div className="text-base font-semibold text-sky-300">生成式方法</div>
+                      </div>
+                      <p className="text-sm text-white/70 leading-relaxed mb-2">
+                        通过语法规则或模板生成测试程序。虽然能控制生成结构，但大多聚焦于
+                        <strong className="text-white">类内或方法内</strong>的优化场景
+                      </p>
+                      <div className="space-y-1 mb-2">
+                        <div className="flex items-start gap-1">
+                          <span className="text-sm text-sky-400 shrink-0">•</span>
+                          <span className="text-sm text-white/60">JITFuzz (ICSE'23): 主要测试单类的 JIT 优化</span>
+                        </div>
+                        <div className="flex items-start gap-1">
+                          <span className="text-sm text-sky-400 shrink-0">•</span>
+                          <span className="text-sm text-white/60">MopFuzzer (ASPLOS'24): 聚焦特定优化模式</span>
+                        </div>
+                      </div>
+                      <div className="text-sm text-rose-300 bg-rose-500/10 p-2 rounded">
+                        <strong>局限：</strong>缺乏对跨类结构的系统建模，难以生成多类协作场景
+                      </div>
+                    </div>
+                    
+                    <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🔄</span>
+                        <div className="text-base font-semibold text-purple-300">变异式方法</div>
+                      </div>
+                      <p className="text-sm text-white/70 leading-relaxed mb-2">
+                        对现有程序进行修改来产生新测试。但变异操作通常局限于
+                        <strong className="text-white">单个方法或语句</strong>级别
+                      </p>
+                      <div className="space-y-1 mb-2">
+                        <div className="flex items-start gap-1">
+                          <span className="text-sm text-purple-400 shrink-0">•</span>
+                          <span className="text-sm text-white/60">Jetris (CCS'24): 针对方法片段进行模糊测试</span>
+                        </div>
+                        <div className="flex items-start gap-1">
+                          <span className="text-sm text-purple-400 shrink-0">•</span>
+                          <span className="text-sm text-white/60">传统工具：随机修改表达式或语句</span>
+                        </div>
+                      </div>
+                      <div className="text-sm text-rose-300 bg-rose-500/10 p-2 rounded">
+                        <strong>局限：</strong>无法引入新的类间关系，跨类结构覆盖不足
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 rounded-lg bg-gradient-to-r from-rose-500/10 to-red-500/10 border border-rose-500/30">
+                    <p className="text-white/80 text-base leading-relaxed">
+                      <strong className="text-rose-300">⚠️ 核心问题：</strong>
+                      现有方法<strong className="text-white">缺乏对跨类结构的系统化建模和生成能力</strong>，
+                      无法有效测试 Java 编译器在处理复杂类间关系时的正确性。
+                      这导致大量与跨类结构相关的编译器缺陷无法被及时发现。
+                    </p>
                   </div>
                 </div>
-                <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-3">
-                  <div className="text-sm font-semibold text-purple-400 mb-2">变异式方法</div>
-                  <p className="text-xs text-white/70 leading-relaxed mb-2">
-                    只针对单个方法片段进行模糊测试
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70">Jetris (CCS'24)</span>
-                  </div>
-                </div>
               </div>
-            </div>
-
-            <div className="border-l-4 border-amber-500/50 pl-4 py-2 bg-amber-500/5 rounded-r-lg">
-              <h3 className="font-semibold mb-2 text-amber-300">核心瓶颈</h3>
-              <p className="text-white/80 text-sm leading-relaxed">
-                <strong className="text-white">当前模糊测试无法系统性地生成具有复杂类间结构的测试样例</strong>，
-                这成为揭露编译器优化错误的主要障碍。
-              </p>
             </div>
 
             {/* 7. InterFuzz 的目标 */}
@@ -491,7 +457,7 @@ export default function Principle() {
                 <span>InterFuzz 的目标与价值</span>
               </h3>
               <div className="space-y-3">
-                <p className="text-white/90 text-sm leading-relaxed">
+                <p className="text-white/90 text-base leading-relaxed">
                   基于实证研究的发现和对现有方法局限性的分析，
                   InterFuzz 提出了一种<strong className="text-white">系统化的解决方案</strong>：
                   通过异构程序图（HPG）建模、跨类结构变异算子和图复杂度引导，
@@ -500,10 +466,10 @@ export default function Principle() {
                 </p>
                 
                 <div className="p-3 rounded-lg bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
-                  <p className="text-white/90 text-sm leading-relaxed">
+                  <p className="text-white/90 text-base leading-relaxed">
                     <strong className="text-emerald-200">💡 核心价值：</strong>
-                    验证 Java 优化编译器在复杂跨类结构下的正确性，<strong className="text-white">不仅重要，而且迫切</strong>。
-                    InterFuzz 通过系统化生成复杂测试用例，从根本上提升整个 Java 生态系统的可靠性和安全性。
+                    InterFuzz 从根本上解决了"<strong className="text-white">如何系统化生成复杂跨类结构测试用例</strong>"这一关键问题，
+                    为 Java 编译器测试开辟了新的方向，从而提升整个 Java 生态系统的可靠性和安全性。
                   </p>
                 </div>
               </div>
@@ -512,20 +478,27 @@ export default function Principle() {
         </section>
       )
     },
-
     {
       id: 'overview',
       title: 'InterFuzz 方法概览',
       hint: '挑战 · 方法 · 架构',
       render: () => (
-        <section className="card route-in">
+        <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-2xl font-semibold mb-2">我们的方法：InterFuzz</h2>
-            {/* <span className="badge">方案</span> */}
           </div>
           
           <div className="space-y-4">
-            {/* 挑战部分 */}
+            {/* 引言 */}
+            <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-4">
+              <p className="text-white/90 text-base leading-relaxed">
+                基于实证研究的发现和对现有方法局限性的分析，
+                InterFuzz 提出了一种<strong className="text-white">系统化的解决方案</strong>。
+                为了有效生成具有复杂跨类结构的测试用例，我们需要首先明确面临的核心挑战。
+              </p>
+            </div>
+
+            {/* 三大挑战 */}
             <div className="rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-4">
               <h3 className="font-semibold mb-3 text-amber-300 flex items-center gap-2">
                 <AlertTriangle size={18} />
@@ -536,8 +509,8 @@ export default function Principle() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl font-bold text-rose-400 shrink-0">1</span>
                     <div>
-                      <h4 className="font-semibold text-rose-300 mb-1.5">结构建模困难</h4>
-                      <p className="text-sm text-white/75 leading-relaxed">
+                      <h4 className="font-semibold text-rose-300 mb-1.5">挑战一：结构建模困难</h4>
+                      <p className="text-base text-white/75 leading-relaxed">
                         类之间的关系多种多样（继承、接口、嵌套、泛型、引用等），涉及实例化、方法调用、字段访问等多种语法形式。
                         现有方法往往只能捕捉局部类内逻辑，<strong className="text-white">无法全面、统一地描述类之间的复杂依赖</strong>。
                       </p>
@@ -549,8 +522,8 @@ export default function Principle() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl font-bold text-amber-400 shrink-0">2</span>
                     <div>
-                      <h4 className="font-semibold text-amber-300 mb-1.5">程序生成复杂</h4>
-                      <p className="text-sm text-white/75 leading-relaxed">
+                      <h4 className="font-semibold text-amber-300 mb-1.5">挑战二：程序生成复杂</h4>
+                      <p className="text-base text-white/75 leading-relaxed">
                         在构造和修改这些结构时，需要同时满足 Java 的语法与语义约束（类型兼容、可见性、初始化顺序等）。
                         稍有不慎就可能<strong className="text-white">生成无法编译或运行时崩溃的测试程序</strong>，
                         降低测试的有效性。
@@ -563,8 +536,8 @@ export default function Principle() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl font-bold text-sky-400 shrink-0">3</span>
                     <div>
-                      <h4 className="font-semibold text-sky-300 mb-1.5">搜索空间爆炸</h4>
-                      <p className="text-sm text-white/75 leading-relaxed">
+                      <h4 className="font-semibold text-sky-300 mb-1.5">挑战三：搜索空间爆炸</h4>
+                      <p className="text-base text-white/75 leading-relaxed">
                         引入跨类结构后，程序的语法组合会急剧增多。
                         即便是细微的代码修改，也可能显著改变程序语义和优化路径。
                         <strong className="text-white">如何高效引导搜索，避免盲目变异</strong>，
@@ -575,127 +548,145 @@ export default function Principle() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      )
-    },
-    {
-      id: 'overview',
-      title: 'InterFuzz 方法概览',
-      hint: 'HPG · 变异 · 引导',
-      render: () => (
-        <section className="card route-in">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">我们的方法：InterFuzz</h2>
-            <span className="badge">方案</span>
-          </div>
-          
-          <div className="space-y-4">
+
+            {/* InterFuzz 方法概述 */}
             <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-4">
-              <p className="text-white/90 text-sm leading-relaxed mb-3">
-                为了解决<strong className="text-white">结构建模困难（挑战1）</strong>、
-                <strong className="text-white">程序生成复杂（挑战2）</strong>、
-                <strong className="text-white">搜索空间爆炸（挑战3）</strong>等三大挑战，
-                本文提出了一种新型 Java 编译器模糊测试框架——
-                <strong className="text-white">InterFuzz</strong>。
-              {/* </p> */}
-              {/* <div className="bg-white/5 rounded-lg p-3 border-l-4 border-purple-500/50"> */}
-                {/* <p className="text-white/80 text-sm"> */}
-                  <strong className="text-white">InterFuzz</strong> 通过引入 
-                  <strong className="text-white">异构程序图（HPG）</strong> 作为核心抽象，
-                  并结合 <strong className="text-white">跨类结构变异算子</strong> 与 
-                  <strong className="text-white">图复杂度度量</strong> 三个关键组件，
-                  实现了系统化的复杂类间结构生成与优化编译器验证。
-                </p>
-              {/* </div> */}
+              <h3 className="font-semibold mb-3 text-purple-300 flex items-center gap-2">
+                <Layers size={18} />
+                <span>InterFuzz 核心思想</span>
+              </h3>
+              <p className="text-white/90 text-base leading-relaxed">
+                针对上述三大挑战，InterFuzz 通过引入 
+                <strong className="text-white">异构程序图（HPG）</strong> 作为核心抽象，
+                并结合 <strong className="text-white">跨类结构变异算子</strong> 与 
+                <strong className="text-white">图复杂度度量</strong> 三个关键组件，
+                实现了系统化的复杂跨类结构生成与优化编译器验证。
+              </p>
             </div>
 
-            <div className="flex justify-center">
-              <div className="w-2/3">
-                <img 
-                  src={getImagePath('overview')} 
-                  alt="InterFuzz 方法概览" 
-                  className="w-full object-contain rounded-lg"
-                />
-                <div className="text-xs text-white/60 text-center mt-3 font-medium py-1 rounded">
-                  图3: InterFuzz 整体架构 — HPG 建模 → 跨类变异 → 复杂度引导
-                </div>
+            {/* 架构图 */}
+            <div className="rounded-xl overflow-hidden border-2 border-purple-500/30 p-3 hover:border-purple-500/50 transition-all duration-300 shadow-lg themed-surface">
+              <ThemedImage
+                lightSrc="/overview-light.png"
+                darkSrc="/overview-dark.png"
+                alt="InterFuzz 方法概览"
+                className="w-full object-contain rounded-lg"
+                style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
+              />
+              <div className="text-sm text-purple-300 text-center mt-3 font-medium bg-purple-500/10 py-1 rounded">
+                图3: InterFuzz 整体架构 — HPG 建模 → 跨类变异 → 复杂度引导
               </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-3">
-              <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-transparent border border-sky-500/20 p-4 hover:border-sky-500/40 hover:shadow-lg hover:shadow-sky-500/10 transition-all duration-300 cursor-default">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-sky-500/20 grid place-items-center shrink-0">
-                    <Layers size={20} className="text-sky-400" />
+            {/* 三个核心组件 */}
+            <div>
+              <h3 className="font-semibold mb-3 text-white flex items-center gap-2">
+                <span className="text-purple-400">⚙️</span>
+                <span>三个核心组件及其对应挑战</span>
+              </h3>
+              <div className="grid md:grid-cols-3 gap-3">
+                <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-transparent border border-sky-500/20 p-4 hover:border-sky-500/40 hover:shadow-lg hover:shadow-sky-500/10 transition-all duration-300 cursor-default">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-sky-500/20 grid place-items-center shrink-0">
+                      <Layers size={20} className="text-sky-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sky-300 text-base mb-1">异构程序图（HPG）</h4>
+                      <div className="text-sm text-sky-400/60 font-medium">Heterogeneous Program Graph</div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-sky-300 mb-1">异构程序图（HPG）</h3>
-                    <div className="text-[10px] text-gray-700 font-medium">Heterogeneous Program Graph</div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-rose-400 text-sm shrink-0 mt-0.5">🎯</span>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        <strong className="text-white">应对挑战一：结构建模困难</strong>
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-white/40 text-sm shrink-0 mt-0.5">→</span>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        将多样的类间结构语法实现抽象为图中不同类型的节点和边
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-white/40 text-sm shrink-0 mt-0.5">✓</span>
+                      <p className="text-sm text-white/60 leading-relaxed">
+                        提供统一而简洁的表示方法，支持对各种类间结构进行统一分析与操作
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-1.5">
-                    <span className="text-white/40 text-xs shrink-0 mt-0.5">→</span>
-                    <p className="text-xs text-white/70 leading-relaxed">
-                      <strong className="text-white">应对挑战1·结构建模困难</strong>：
-                      将多样的类间结构语法实现抽象为图中不同的边类型
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="text-white/40 text-xs shrink-0 mt-0.5">✓</span>
-                    <p className="text-xs text-white/60 leading-relaxed">
-                      统一而简洁的表示方法，支持对各种类间结构进行统一分析与操作
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-4 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-default">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 grid place-items-center shrink-0">
-                    <Wand2 size={20} className="text-purple-400" />
+                <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 p-4 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-default">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 grid place-items-center shrink-0">
+                      <Wand2 size={20} className="text-purple-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-purple-300 text-base mb-1">跨类结构变异算子</h4>
+                      <div className="text-sm text-purple-400/60 font-medium">Inter-Class Mutators</div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-purple-300 mb-1">跨类结构变异算子</h3>
-                    <div className="text-[10px] text-gray-700 font-medium">Inter-Class Mutators</div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-amber-400 text-sm shrink-0 mt-0.5">🎯</span>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        <strong className="text-white">应对挑战二：程序生成复杂</strong>
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-white/40 text-sm shrink-0 mt-0.5">→</span>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        通过在 HPG 上执行原子操作来引入和修改跨类结构
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-white/40 text-sm shrink-0 mt-0.5">✓</span>
+                      <p className="text-sm text-white/60 leading-relaxed">
+                        将复杂的代码级修改转化为可控的高层图操作，保证生成程序的正确性
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-1.5">
-                    <span className="text-white/40 text-xs shrink-0 mt-0.5">→</span>
-                    <p className="text-xs text-white/70 leading-relaxed">
-                      <strong className="text-white">应对挑战2·程序生成复杂</strong>：
-                      通过操作HPG在种子程序中生成复杂类间结构
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-1.5">
-                    <span className="text-white/40 text-xs shrink-0 mt-0.5">✓</span>
-                    <p className="text-xs text-white/60 leading-relaxed">
-                      将困难的类间结构变异转化为可控的高层图操作过程
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="rounded-xl bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/20 p-4 hover:border-pink-500/40 hover:shadow-lg hover:shadow-pink-500/10 transition-all duration-300 cursor-default">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gauge size={20} className="text-pink-400" />
-                  <h3 className="font-semibold text-pink-300">复杂度引导</h3>
-                </div>
-                <p className="text-xs text-white/70 leading-relaxed">
-                  <strong className="text-white">图复杂度引导</strong>（Graph Complexity Guidance）：
-                  评估关系多样性与连接规模，优先探索易触发缺陷的结构
-                </p>
-                <div className="mt-2 pt-2 border-t border-pink-500/20">
-                  <span className="text-xs text-pink-400/70 font-mono">多样性 + 规模 → 引导</span>
+                <div className="rounded-xl bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/20 p-4 hover:border-pink-500/40 hover:shadow-lg hover:shadow-pink-500/10 transition-all duration-300 cursor-default">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-pink-500/20 grid place-items-center shrink-0">
+                      <Gauge size={20} className="text-pink-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-pink-300 text-base mb-1">图复杂度引导</h4>
+                      <div className="text-sm text-pink-400/60 font-medium">Graph Complexity Guidance</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-sky-400 text-sm shrink-0 mt-0.5">🎯</span>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        <strong className="text-white">应对挑战三：搜索空间爆炸</strong>
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-white/40 text-sm shrink-0 mt-0.5">→</span>
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        评估程序的关系多样性与连接规模，优先探索结构复杂的测试用例
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-white/40 text-sm shrink-0 mt-0.5">✓</span>
+                      <p className="text-sm text-white/60 leading-relaxed">
+                        基于图复杂度指标引导搜索，高效发现易触发缺陷的程序结构
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="border-l-4 border-purple-500/50 pl-4 py-2 bg-purple-500/5 rounded-r-lg">
-              <p className="text-white/80 text-sm leading-relaxed">
-                💡 InterFuzz 通过这三个核心组件的协同工作，实现了系统化的复杂跨类结构生成与优化编译器验证。
+            <div className="border-l-4 border-purple-500/50 pl-4 py-3 bg-purple-500/5 rounded-r-lg">
+              <p className="text-white/80 text-base leading-relaxed">
+                💡 InterFuzz 通过这三个核心组件的协同工作，系统化地解决了复杂跨类结构生成的三大挑战，
+                实现了高效的 Java 优化编译器模糊测试。
               </p>
             </div>
           </div>
@@ -707,7 +698,7 @@ export default function Principle() {
       title: '异构图程序图表示',
       hint: '统一抽象 · 结构化表示',
       render: () => (
-        <section className="card route-in">
+        <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold">异构程序图（HPG）</h2>
             <span className="badge">核心 1</span>
@@ -732,7 +723,7 @@ export default function Principle() {
               </h3>
               <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/90 overflow-x-auto mb-3">
                 <div className="mb-3 text-base">HPG(𝒫) = (V<sub>𝒫</sub>, 𝒯, E<sub>𝒫</sub>, ℰ)</div>
-                <div className="text-xs text-white/70 space-y-1.5 pl-4 border-l-2 border-sky-500/30">
+                <div className="text-sm text-white/70 space-y-1.5 pl-4 border-l-2 border-sky-500/30">
                   <div>• <strong>V<sub>𝒫</sub></strong>: 节点集合，表示程序中的跨类实体（inter-class entities）</div>
                   <div>• <strong>E<sub>𝒫</sub></strong>: 有向边集合，表示实体间的跨类结构（inter-class structures）</div>
                   <div>• <strong>𝒯</strong>: 节点类型集合</div>
@@ -764,7 +755,7 @@ export default function Principle() {
                       <span className="text-white/70">字段</span>
                     </div>
                   </div>
-                  <p className="text-xs text-white/60 mt-3 leading-relaxed">
+                  <p className="text-sm text-white/60 mt-3 leading-relaxed">
                     每个节点 v=(t,n)，其中 t∈𝒯 为类型，n 为属性（名称、修饰符等）
                   </p>
                 </div>
@@ -796,7 +787,7 @@ export default function Principle() {
                       <span className="text-white/80">Reference（引用）</span>
                     </div>
                   </div>
-                  <p className="text-xs text-white/60 mt-3 leading-relaxed">
+                  <p className="text-sm text-white/60 mt-3 leading-relaxed">
                     每条边 e=(v<sub>s</sub>,v<sub>t</sub>,r,n)，描述跨类依赖的语义特征
                   </p>
                 </div>
@@ -813,13 +804,15 @@ export default function Principle() {
                 而 <code className="px-1.5 py-0.5 rounded bg-white/10 text-purple-300">I2 → I1</code> 的 
                 <strong className="text-white">Inheritance</strong> 边表示接口继承。
               </p>
-              <div className="rounded-xl overflow-hidden">
-                <img 
-                  src={getImagePath('motivating-example-with-hpg')} 
-                  alt="HPG 示例：Motivating Example" 
+              <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 p-3 hover:border-amber-500/60 transition-all duration-300 shadow-lg themed-surface">
+                <ThemedImage
+                  lightSrc="/motivating-example-with-hpg-light.png"
+                  darkSrc="/motivating-example-with-hpg-dark.png"
+                  alt="HPG 示例：Motivating Example"
                   className="w-full rounded-lg object-contain"
+                  style={{ maxWidth: '100%', margin: '0 auto', display: 'block' }}
                 />
-                <div className="text-xs text-white/60 text-center mt-3 font-medium py-1 rounded">
+                <div className="text-sm text-amber-300 text-center mt-3 font-medium bg-amber-500/10 py-1 rounded">
                   图4: 程序的 HPG 表示 — 节点表示实体，边表示类间关系
                 </div>
               </div>
@@ -851,7 +844,7 @@ export default function Principle() {
       title: '跨类结构变异算子',
       hint: '在图上的原子操作',
       render: () => (
-        <section className="card route-in">
+        <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold">跨类结构变异算子（Inter-Class Mutators）</h2>
             <span className="badge">核心 2</span>
@@ -953,37 +946,39 @@ export default function Principle() {
                 每个变异算子对应一种原子操作，保证生成的程序在语法和语义上都是正确的。
               </p>
               
-              <div className="rounded-xl overflow-hidden mb-4">
-                <img 
-                  src={getImagePath('inter-class-mutators')} 
-                  alt="跨类结构变异算子操作示例" 
+              <div className="rounded-xl overflow-hidden border-2 border-emerald-500/40 p-3 hover:border-emerald-500/60 transition-all duration-300 shadow-lg themed-surface mb-4">
+                <ThemedImage
+                  lightSrc="/inter-class-mutators-light.png"
+                  darkSrc="/inter-class-mutators-dark.jpg"
+                  alt="跨类结构变异算子操作示例"
                   className="w-full rounded-lg object-contain"
+                  style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
                 />
-                <div className="text-xs text-white/60 text-center mt-3 font-medium py-1 rounded">
+                <div className="text-sm text-emerald-300 text-center mt-3 font-medium bg-emerald-500/10 py-1 rounded">
                   图5: 三个代表性变异算子的操作示意
                 </div>
               </div>
 
               <div className="grid md:grid-cols-3 gap-3">
                 <div className="rounded-lg bg-gradient-to-br from-sky-500/10 to-transparent border border-sky-500/30 p-3 hover:border-sky-500/50 transition-all">
-                  <div className="font-semibold text-sky-300 text-sm mb-2">添加/移除接口实现</div>
-                  <div className="text-xs text-white/70 leading-relaxed">
+                  <div className="font-semibold text-sky-300 text-base mb-2">添加/移除接口实现</div>
+                  <div className="text-sm text-white/70 leading-relaxed">
                     在类与接口之间添加或移除实现关系（implements），改变类的类型层级结构，
                     使类获得或失去特定接口的行为契约
                   </div>
                 </div>
                 
                 <div className="rounded-lg bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/30 p-3 hover:border-purple-500/50 transition-all">
-                  <div className="font-semibold text-purple-300 text-sm mb-2">添加/移除嵌套类</div>
-                  <div className="text-xs text-white/70 leading-relaxed">
+                  <div className="font-semibold text-purple-300 text-base mb-2">添加/移除嵌套类</div>
+                  <div className="text-sm text-white/70 leading-relaxed">
                     在类内部添加或移除嵌套类（inner class），增加跨类的包含关系复杂度，
                     创建更紧密的跨类耦合和作用域依赖
                   </div>
                 </div>
                 
                 <div className="rounded-lg bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/30 p-3 hover:border-pink-500/50 transition-all">
-                  <div className="font-semibold text-pink-300 text-sm mb-2">添加引用关系</div>
-                  <div className="text-xs text-white/70 leading-relaxed">
+                  <div className="font-semibold text-pink-300 text-base mb-2">添加引用关系</div>
+                  <div className="text-sm text-white/70 leading-relaxed">
                     在类之间添加引用关系（通过字段、方法参数或返回值），
                     使类之间产生新的数据流依赖和对象创建链
                   </div>
@@ -993,7 +988,7 @@ export default function Principle() {
 
             <div className="border-l-4 border-purple-500/50 pl-4 py-3 bg-purple-500/5 rounded-r-lg">
               <h3 className="font-semibold mb-2 text-purple-300">覆盖范围</h3>
-              <p className="text-white/80 text-sm leading-relaxed">
+              <p className="text-white/80 text-base leading-relaxed">
                 InterFuzz 共针对 HPG 中的<strong className="text-white">五类结构</strong>
                 （继承、接口实现、嵌套、泛型约束、引用）和
                 <strong className="text-white">四类实体</strong>
@@ -1009,7 +1004,7 @@ export default function Principle() {
       title: '图复杂度引导',
       hint: '多样性优先 · 有效搜索',
       render: () => (
-        <section className="card route-in">
+        <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold">图复杂度引导（Graph Complexity Guidance）</h2>
             <span className="badge">核心 3</span>
@@ -1039,7 +1034,7 @@ export default function Principle() {
                     同一实体若同时参与多种跨类关系（如继承、接口实现、嵌套、泛型约束、引用），
                     编译器需要在多种分析假设下综合处理。
                   </p>
-                  <p className="text-xs text-white/60 leading-relaxed">
+                  <p className="text-sm text-white/60 leading-relaxed">
                     多样性越高，潜在行为分支越多，触发缺陷的机会越大。
                   </p>
                 </div>
@@ -1054,7 +1049,7 @@ export default function Principle() {
                     实体连接的关系越多（被更多方法调用、持有/访问更多字段、与更多类型建立层级关系），
                     其在程序中的"交汇度"越高。
                   </p>
-                  <p className="text-xs text-white/60 leading-relaxed">
+                  <p className="text-sm text-white/60 leading-relaxed">
                     小的修改就可能在更广的范围内产生连锁效应，放大编译器优化假设的偏差。
                   </p>
                 </div>
@@ -1111,7 +1106,7 @@ export default function Principle() {
       title: '实验结果与发现',
       hint: '高效 · 覆盖广',
       render: () => (
-        <section className="card route-in">
+        <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold">实验结果与发现</h2>
             <span className="badge">成果</span>
@@ -1128,26 +1123,26 @@ export default function Principle() {
             <div className="grid md:grid-cols-3 gap-3">
               <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/30 p-4 text-center hover:scale-105 transition-transform duration-300">
                 <div className="text-5xl font-bold text-emerald-300 mb-2 bg-gradient-to-br from-emerald-300 to-emerald-500 bg-clip-text text-transparent">24</div>
-                <div className="text-sm text-white/90 font-medium mb-1">新发现的缺陷</div>
-                <div className="text-xs text-white/60">覆盖 HotSpot、ART、R8</div>
+                <div className="text-base text-white/90 font-medium mb-1">新发现的缺陷</div>
+                <div className="text-sm text-white/60">覆盖 HotSpot、ART、R8</div>
                 <div className="mt-2 pt-2 border-t border-emerald-500/20">
-                  <span className="text-xs text-emerald-400">三大主流编译器</span>
+                  <span className="text-sm text-emerald-400">三大主流编译器</span>
                 </div>
               </div>
               <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-transparent border border-sky-500/30 p-4 text-center hover:scale-105 transition-transform duration-300">
                 <div className="text-5xl font-bold text-sky-300 mb-2 bg-gradient-to-br from-sky-300 to-sky-500 bg-clip-text text-transparent">20</div>
-                <div className="text-sm text-white/90 font-medium mb-1">官方确认的缺陷</div>
-                <div className="text-xs text-white/60">83.3% 确认率</div>
+                <div className="text-base text-white/90 font-medium mb-1">官方确认的缺陷</div>
+                <div className="text-sm text-white/60">83.3% 确认率</div>
                 <div className="mt-2 pt-2 border-t border-sky-500/20">
-                  <span className="text-xs text-sky-400">高可信度</span>
+                  <span className="text-sm text-sky-400">高可信度</span>
                 </div>
               </div>
               <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/30 p-4 text-center hover:scale-105 transition-transform duration-300">
                 <div className="text-5xl font-bold text-purple-300 mb-2 bg-gradient-to-br from-purple-300 to-purple-500 bg-clip-text text-transparent">16</div>
-                <div className="text-sm text-white/90 font-medium mb-1">跨类结构相关缺陷</div>
-                <div className="text-xs text-white/60">传统方法难以触及</div>
+                <div className="text-base text-white/90 font-medium mb-1">跨类结构相关缺陷</div>
+                <div className="text-sm text-white/60">传统方法难以触及</div>
                 <div className="mt-2 pt-2 border-t border-purple-500/20">
-                  <span className="text-xs text-purple-400">核心贡献</span>
+                  <span className="text-sm text-purple-400">核心贡献</span>
                 </div>
               </div>
             </div>
@@ -1161,7 +1156,7 @@ export default function Principle() {
                 <li className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
                   <CheckCircle2 size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm text-white/90 leading-relaxed">
+                    <p className="text-base text-white/90 leading-relaxed">
                       在 24 小时的实验中，InterFuzz 不仅发现的缺陷更多，
                       还在<strong className="text-white">代码覆盖率</strong>方面显著领先于现有工具
                     </p>
@@ -1170,7 +1165,7 @@ export default function Principle() {
                 <li className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
                   <CheckCircle2 size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm text-white/90 leading-relaxed">
+                    <p className="text-base text-white/90 leading-relaxed">
                       消融实验表明，基于<strong className="text-white">图复杂度的引导机制</strong>，
                       是 InterFuzz 高效发现复杂优化错误的关键
                     </p>
@@ -1179,7 +1174,7 @@ export default function Principle() {
                 <li className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
                   <CheckCircle2 size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm text-white/90 leading-relaxed">
+                    <p className="text-base text-white/90 leading-relaxed">
                       <strong className="text-white">16 个缺陷被证实与复杂跨类结构直接相关</strong>，
                       证明了 HPG + 图驱动变异的有效性
                     </p>
@@ -1199,7 +1194,7 @@ export default function Principle() {
         </section>
       )
     }
-  ], [isDark])
+  ], [])
 
   const [active, setActive] = useState<string>(items[0]?.id || 'background')
   const mainRef = useRef<HTMLDivElement | null>(null)
@@ -1230,122 +1225,60 @@ export default function Principle() {
   const current = items.find(i => i.id === active) || items[0]
 
   return (
-  <div className="grid md:grid-cols-[240px_1fr] gap-6 items-start min-h-[85vh]">
-      {/* 顶部轻量概览横幅（仅显示一次） */}
-      <div className="md:col-span-2">
-        <div className="px-1">
-          <div className="inline-flex items-center gap-2">
-            <span className="badge">原理概览</span>
-            <span className="text-sm text-white/70">HPG 模型 · 结构保持变异 · 引导信号 · 差分一致性 · 安全边界</span>
-          </div>
-          <div className="mt-3 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent)]" />
-          {/* 删除“三步速览”应用户要求 */}
-          {/* 术语速查（右侧按钮展开 + 可搜索） */}
-          <div className="mt-3 rounded-xl bg-white/5 border border-white/10 p-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-white/80">术语速查</div>
-              <button
-                type="button"
-                className={
-                  'text-xs px-3 py-1 rounded-full border transition shadow-sm ' +
-                  (glossaryVisible
-                    ? 'bg-pink-500/20 border-pink-500/40 text-pink-200 shadow-pink-500/20 hover:bg-pink-500/25'
-                    : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white')
-                }
-                aria-pressed={glossaryVisible}
-                onClick={() => setGlossaryVisible(v => !v)}
-              >
-                {glossaryVisible ? '收起术语 ✨' : '查询术语 ✨'}
-              </button>
-            </div>
-            {glossaryVisible && (
-              <>
-                <div className="mt-2">
-                  <input
-                    value={glossaryQuery}
-                    onChange={(e) => setGlossaryQuery(e.target.value)}
-                    placeholder="搜索术语/描述…"
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-pink-400/40"
-                  />
-                </div>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  {filteredGlossary.length === 0 && (
-                    <div className="text-xs text-white/50">没有匹配的术语</div>
-                  )}
-                  {filteredGlossary.map(g => (
-                    <div key={g.key} className="max-w-[360px]">
-                      <button
-                        type="button"
-                        className={
-                          'px-2 py-1 rounded-full text-[13px] transition border ' +
-                          (openGlossaryKey === g.key
-                            ? 'bg-white/10 border-white/20 text-white'
-                            : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white')
-                        }
-                        aria-expanded={openGlossaryKey === g.key}
-                        onClick={() => setOpenGlossaryKey(prev => (prev === g.key ? null : g.key))}
-                      >
-                        {g.term}
-                      </button>
-                      {openGlossaryKey === g.key && (
-                        <div className="mt-1 text-xs text-white/75 bg-white/5 border border-white/10 rounded-lg p-2">
-                          {g.desc}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      {/* 页面标题 */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white mb-2">工具介绍</h1>
+        <p className="text-white/60 text-sm">InterFuzz: 基于异构程序图的 Java 编译器模糊测试框架</p>
       </div>
-      {/* 左侧竖向导航（更轻、更灵动） */}
-  <aside className="md:sticky md:top-24 self-start">
-        <div className="relative pl-3">
-          <div className="absolute left-0 top-0 bottom-0 w-px bg-white/10" />
-          <nav className="flex md:flex-col gap-1">
-            {items.map((it) => (
-              <button
-                key={it.id}
-                className={
-                  `relative text-left rounded-lg px-3 py-2 text-sm transition transform ` +
-                  (active === it.id
-                    ? 'text-white bg-white/10 hover:bg-white/15 before:absolute before:left-[-3px] before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-5 before:rounded-full before:bg-sky-500'
-                    : 'text-white/80 hover:text-white hover:bg-white/5 hover:translate-x-0.5')
-                }
-                aria-current={active === it.id ? 'page' : undefined}
-                onClick={() => setActive(it.id)}
-              >
-                <div className="flex items-center gap-2 font-medium leading-tight">
-                  {/* icon */}
-                  <span className="shrink-0 text-white/70">
-                    {it.id === 'background' && <BookOpen size={16} />}
-                    {it.id === 'challenges' && <AlertTriangle size={16} />}
-                    {it.id === 'overview' && <Layers size={16} />}
-                    {it.id === 'hpg' && <Layers size={16} />}
-                    {it.id === 'mut' && <Wand2 size={16} />}
-                    {it.id === 'guide' && <Gauge size={16} />}
-                    {it.id === 'results' && <BarChart3 size={16} />}
-                  </span>
-                  <span>{it.title}</span>
-                </div>
-                <div className="text-[11px] text-white/60">{it.hint}</div>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </aside>
 
-      {/* 右侧内容区（更高的可视占比） */}
-      <main ref={mainRef} className="space-y-4 min-h-[80vh] pb-12 md:pt-8 grid place-items-center">
-        {/* 切换内容，带入场动画 */}
-        <div key={current.id} className="route-in w-full flex justify-center">
-          <div className="w-full max-w-5xl">
-            {current.render()}
+      <div className="grid md:grid-cols-[240px_1fr] gap-6 items-start">
+        {/* 左侧竖向导航（更轻、更灵动） */}
+        <aside className="md:sticky md:top-24 self-start">
+          <div className="relative pl-3">
+            <div className="absolute left-0 top-0 bottom-0 w-px bg-white/10" />
+            <nav className="flex md:flex-col gap-1">
+              {items.map((it) => (
+                <button
+                  key={it.id}
+                  className={
+                    `relative text-left rounded-lg px-3 py-2 text-sm transition transform ` +
+                    (active === it.id
+                      ? 'text-white bg-white/10 hover:bg-white/15 before:absolute before:left-[-3px] before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-5 before:rounded-full before:bg-sky-500'
+                      : 'text-white/80 hover:text-white hover:bg-white/5 hover:translate-x-0.5')
+                  }
+                  aria-current={active === it.id ? 'page' : undefined}
+                  onClick={() => setActive(it.id)}
+                >
+                  <div className="flex items-center gap-2 font-medium leading-tight">
+                    {/* icon */}
+                    <span className="shrink-0 text-white/70">
+                      {it.id === 'background' && <BookOpen size={16} />}
+                      {it.id === 'overview' && <Layers size={16} />}
+                      {it.id === 'hpg' && <Layers size={16} />}
+                      {it.id === 'mut' && <Wand2 size={16} />}
+                      {it.id === 'guide' && <Gauge size={16} />}
+                      {it.id === 'results' && <BarChart3 size={16} />}
+                    </span>
+                    <span>{it.title}</span>
+                  </div>
+                  <div className="text-[11px] text-white/60">{it.hint}</div>
+                </button>
+              ))}
+            </nav>
           </div>
-        </div>
-      </main>
+        </aside>
+
+        {/* 右侧内容区（统一高度） */}
+        <main ref={mainRef} className="min-h-[75vh]">
+          {/* 切换内容，带入场动画 */}
+          <div key={current.id} className="route-in w-full">
+            <div className="w-full max-w-5xl">
+              {current.render()}
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

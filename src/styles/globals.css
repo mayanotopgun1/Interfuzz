@@ -4,7 +4,24 @@
 
 :root {
   color-scheme: dark;
+  /* 统一的字体层级系统 */
+  font-size: 16px; /* 基础字体大小调大 */
 }
+
+/* 统一字体大小 - 减少层级 */
+body {
+  @apply text-base; /* 正文 16px */
+}
+
+/* 标题层级 */
+.heading-1 { @apply text-5xl font-bold; }      /* 页面主标题 48px */
+.heading-2 { @apply text-3xl font-semibold; }  /* 区块标题 30px */
+.heading-3 { @apply text-xl font-semibold; }   /* 小节标题 20px */
+
+/* 正文层级 */
+.text-body { @apply text-base; }      /* 正文 16px */
+.text-secondary { @apply text-sm; }   /* 次要文字 14px */
+.text-caption { @apply text-xs; }     /* 说明文字 12px */
 
 /* Cards */
 .card {
@@ -160,4 +177,152 @@
 .theme-light .caption-surface {
   background-color: #F8FAFC; /* gray-50 */
   color: #334155; /* slate-700 */
+}
+
+/* Code highlighting - Dark theme (VS2015-like) */
+.hljs-dark {
+  color: #dcdcdc;
+}
+.hljs-dark .hljs-keyword,
+.hljs-dark .hljs-literal,
+.hljs-dark .hljs-symbol,
+.hljs-dark .hljs-name {
+  color: #569cd6;
+}
+.hljs-dark .hljs-link {
+  color: #569cd6;
+  text-decoration: underline;
+}
+.hljs-dark .hljs-built_in,
+.hljs-dark .hljs-type {
+  color: #4ec9b0;
+}
+.hljs-dark .hljs-number,
+.hljs-dark .hljs-class {
+  color: #b8d7a3;
+}
+.hljs-dark .hljs-string,
+.hljs-dark .hljs-meta .hljs-string {
+  color: #ce9178;
+}
+.hljs-dark .hljs-regexp,
+.hljs-dark .hljs-template-tag {
+  color: #d16969;
+}
+.hljs-dark .hljs-subst,
+.hljs-dark .hljs-function,
+.hljs-dark .hljs-title,
+.hljs-dark .hljs-params,
+.hljs-dark .hljs-formula {
+  color: #dcdcaa;
+}
+.hljs-dark .hljs-comment,
+.hljs-dark .hljs-quote {
+  color: #6a9955;
+  font-style: italic;
+}
+.hljs-dark .hljs-doctag {
+  color: #608b4e;
+}
+.hljs-dark .hljs-meta,
+.hljs-dark .hljs-meta .hljs-keyword,
+.hljs-dark .hljs-tag {
+  color: #9b9b9b;
+}
+.hljs-dark .hljs-variable,
+.hljs-dark .hljs-template-variable {
+  color: #bd63c5;
+}
+.hljs-dark .hljs-attr,
+.hljs-dark .hljs-attribute {
+  color: #9cdcfe;
+}
+.hljs-dark .hljs-section {
+  color: gold;
+}
+.hljs-dark .hljs-emphasis {
+  font-style: italic;
+}
+.hljs-dark .hljs-strong {
+  font-weight: bold;
+}
+.hljs-dark .hljs-addition {
+  background-color: #144212;
+}
+.hljs-dark .hljs-deletion {
+  background-color: #600;
+}
+
+/* Code highlighting - Light theme (VS-like) */
+.hljs-light {
+  color: #000000;
+}
+.hljs-light .hljs-keyword,
+.hljs-light .hljs-literal,
+.hljs-light .hljs-symbol,
+.hljs-light .hljs-name {
+  color: #0000ff;
+}
+.hljs-light .hljs-link {
+  color: #0000ff;
+  text-decoration: underline;
+}
+.hljs-light .hljs-built_in,
+.hljs-light .hljs-type {
+  color: #267f99;
+}
+.hljs-light .hljs-number,
+.hljs-light .hljs-class {
+  color: #098658;
+}
+.hljs-light .hljs-string,
+.hljs-light .hljs-meta .hljs-string {
+  color: #a31515;
+}
+.hljs-light .hljs-regexp,
+.hljs-light .hljs-template-tag {
+  color: #811f3f;
+}
+.hljs-light .hljs-subst,
+.hljs-light .hljs-function,
+.hljs-light .hljs-title,
+.hljs-light .hljs-params,
+.hljs-light .hljs-formula {
+  color: #795e26;
+}
+.hljs-light .hljs-comment,
+.hljs-light .hljs-quote {
+  color: #008000;
+  font-style: italic;
+}
+.hljs-light .hljs-doctag {
+  color: #008000;
+}
+.hljs-light .hljs-meta,
+.hljs-light .hljs-meta .hljs-keyword,
+.hljs-light .hljs-tag {
+  color: #800000;
+}
+.hljs-light .hljs-variable,
+.hljs-light .hljs-template-variable {
+  color: #001080;
+}
+.hljs-light .hljs-attr,
+.hljs-light .hljs-attribute {
+  color: #0451a5;
+}
+.hljs-light .hljs-section {
+  color: #e50000;
+}
+.hljs-light .hljs-emphasis {
+  font-style: italic;
+}
+.hljs-light .hljs-strong {
+  font-weight: bold;
+}
+.hljs-light .hljs-addition {
+  background-color: #e6ffed;
+}
+.hljs-light .hljs-deletion {
+  background-color: #ffebe9;
 }
