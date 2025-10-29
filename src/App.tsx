@@ -61,7 +61,7 @@ export default function App() {
           <nav className="flex items-center gap-2">
             <NavLink to="/" label="首页" icon={HomeIcon} />
             <NavLink to="/principle" label="原理" icon={BookOpen} />
-            <NavLink to="/demo" label="工具使用" icon={PlaySquare} />
+            <NavLink to="/demo" label="种子生成" icon={PlaySquare} />
             <NavLink to="/effects" label="效果展示" icon={Bug} />
             <NavLink to="/about" label="关于我们" icon={Users} />
             <button
@@ -99,9 +99,7 @@ export default function App() {
         </div>
       </main>
       <footer className="relative mx-auto max-w-7xl px-4 pb-10 text-xs text-white/50">
-        主要技术与数据依据来源：
-        <br />
-        Shiyu Qiu, Ming Wen, Zifan Xie, Hai Jin. Fuzzing Java Optimizing Compilers with Complex Inter-Class Structures Guided by Heterogeneous Program Graphs. In The International Conference on Software Engineering (ICSE), 2026. (CCF-A)
+        主要技术与数据依据来源：InterFuzz 论文
       </footer>
     </div>
   )
