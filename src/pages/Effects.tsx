@@ -12,7 +12,7 @@ export default function Effects() {
     <div className="container mx-auto px-4 py-8">
       {/* 页面标题 */}
       <div className="mb-8">
-        <h1 className="text-5xl font-bold text-white mb-2">工具效果展示</h1>
+        <h1 className="text-4xl font-bold text-white mb-2">工具效果展示</h1>
         <p className="text-white/60 text-base">发现的编译器 Bug 与研究成果</p>
       </div>
 
@@ -33,10 +33,10 @@ export default function Effects() {
 
       {/* Comparison with Baseline Tools */}
       <section className="card">
-        <h3 className="text-3xl font-semibold mb-6 flex items-center gap-2">
+        <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
           {/* <TrendingUp className="text-emerald-400" size={22} /> */}
           与现有 Java 编译器测试工具对比
-        </h3>
+        </h2>
 
         {/* 核心结论 */}
         <div className="rounded-xl bg-gradient-to-br from-emerald-500/15 to-teal-500/10 border-2 border-emerald-500/40 p-6 mb-6">
@@ -45,9 +45,9 @@ export default function Effects() {
               <Award size={24} className="text-emerald-300" />
             </div>
             <div>
-              <h4 className="text-2xl font-bold text-emerald-300 mb-3">
+              <h3 className="text-xl font-bold text-emerald-300 mb-3">
                 InterFuzz 是目前最有效的 Java 编译器测试工具
-              </h4>
+              </h3>
               <p className="text-base text-white leading-relaxed mb-3">
                 在与 MopFuzzer、Artemis、Jetris 和 JITFuzz 等主流工具的对比实验中，
                 <span className="font-semibold text-emerald-300">InterFuzz 在代码覆盖率和缺陷检测能力两方面均显著领先</span>。
@@ -87,7 +87,7 @@ export default function Effects() {
 
       {/* Bugs Table */}
       <section className="card overflow-x-auto">
-        <h3 className="text-3xl font-semibold mb-6">已发现的 Bug</h3>
+        <h2 className="text-2xl font-semibold mb-6">已发现的 Bug</h2>
         <table className="min-w-full text-base">
           <thead className="text-white/60">
             <tr className="border-b border-white/10">
@@ -120,7 +120,7 @@ export default function Effects() {
 
       {/* 案例详解 */}
       <section className="card">
-        <h3 className="text-3xl font-semibold mb-6">案例详解</h3>
+        <h2 className="text-2xl font-semibold mb-6">案例详解</h2>
         {/* <p className="text-white/70 mb-6">以下展示两个典型的编译器 Bug 案例，包含详细的根因分析和完整的复现代码。</p> */}
         <div className="space-y-6">
           {caseStudies.map((cs) => (
