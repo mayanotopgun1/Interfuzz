@@ -18,7 +18,7 @@ export default function Principle() {
       render: () => (
         <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-3xl font-semibold mb-2">背景与动机</h2>
+            <h2 className="text-2xl font-semibold mb-2">背景与动机</h2>
           </div>
 
           <div className="space-y-4">
@@ -568,7 +568,7 @@ export default function Principle() {
             <div className="rounded-xl overflow-hidden border-2 border-purple-500/30 p-3 hover:border-purple-500/50 transition-all duration-300 shadow-lg themed-surface">
               <ThemedImage
                 lightSrc="/overview-light.png"
-                darkSrc="/overview-dark.png"
+                darkSrc="/overview-dark.jpg"
                 alt="InterFuzz 方法概览"
                 className="w-full object-contain rounded-lg"
                 style={{ maxWidth: '70%', margin: '0 auto', display: 'block' }}
@@ -700,17 +700,17 @@ export default function Principle() {
       render: () => (
         <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">异构程序图（HPG）</h2>
+            <h2 className="text-2xl font-semibold">异构程序图（HPG）</h2>
             <span className="badge">核心 1</span>
           </div>
           
           <div className="space-y-4">
             <div className="rounded-xl bg-gradient-to-br from-sky-500/10 to-purple-500/10 border border-white/10 p-4">
-              <p className="text-white/90 leading-relaxed">
+              <p className="text-white/90 text-base leading-relaxed">
                 为了统一表示 Java 程序中多样的跨类结构（如继承、接口实现、嵌套、泛型约束与引用等），
                 我们提出了<strong className="text-white">异构程序图（Heterogeneous Program Graph, HPG）</strong>。
               </p>
-              <p className="text-white/75 text-sm mt-2 leading-relaxed">
+              <p className="text-white/75 text-base mt-2 leading-relaxed">
                 该模型将程序抽象为一个多类型有向图，使复杂的跨类依赖关系能够以结构化形式进行分析与操作。
                 通过这种表示，我们可以将抽象的"结构复杂性"问题转化为可量化的图结构问题。
               </p>
@@ -807,7 +807,7 @@ export default function Principle() {
               <div className="rounded-xl overflow-hidden border-2 border-amber-500/40 p-3 hover:border-amber-500/60 transition-all duration-300 shadow-lg themed-surface">
                 <ThemedImage
                   lightSrc="/motivating-example-with-hpg-light.png"
-                  darkSrc="/motivating-example-with-hpg-dark.png"
+                  darkSrc="/motivating-example-with-hpg-dark.jpg"
                   alt="HPG 示例：Motivating Example"
                   className="w-full rounded-lg object-contain"
                   style={{ maxWidth: '100%', margin: '0 auto', display: 'block' }}
@@ -846,13 +846,13 @@ export default function Principle() {
       render: () => (
         <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">跨类结构变异算子（Inter-Class Mutators）</h2>
+            <h2 className="text-2xl font-semibold">跨类结构变异算子（Inter-Class Mutators）</h2>
             <span className="badge">核心 2</span>
           </div>
           
           <div className="space-y-4">
             <div className="rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-4">
-              <p className="text-white/90 leading-relaxed">
+              <p className="text-white/90 text-base leading-relaxed">
                 为了生成包含复杂跨类结构的测试程序，InterFuzz 设计了一组
                 <strong className="text-white">跨类结构变异算子（Inter-Class Mutators）</strong>。
                 基于 HPG，这些算子通过在图上操作节点和边来修改程序结构，
@@ -1006,17 +1006,17 @@ export default function Principle() {
       render: () => (
         <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">图复杂度引导（Graph Complexity Guidance）</h2>
+            <h2 className="text-2xl font-semibold">图复杂度引导（Graph Complexity Guidance）</h2>
             <span className="badge">核心 3</span>
           </div>
           
           <div className="space-y-4">
             <div className="rounded-xl bg-gradient-to-br from-pink-500/10 to-rose-500/10 border border-pink-500/20 p-4">
-              <p className="text-white/90 leading-relaxed">
+              <p className="text-white/90 text-base leading-relaxed">
                 为在变异过程中优先生成"更可能触发优化缺陷"的测试样例，InterFuzz 引入
                 <strong className="text-white">图复杂度引导（Graph Complexity Guidance）</strong>。
               </p>
-              <p className="text-white/75 text-sm mt-2 leading-relaxed">
+              <p className="text-white/75 text-base mt-2 leading-relaxed">
                 核心直觉：<strong className="text-white">越复杂的跨类结构，越容易覆盖到编译器更深层的优化路径与边界条件</strong>。
               </p>
             </div>
@@ -1108,13 +1108,13 @@ export default function Principle() {
       render: () => (
         <section className="card route-in min-h-[70vh]">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-semibold">实验结果与发现</h2>
+            <h2 className="text-2xl font-semibold">实验结果与发现</h2>
             <span className="badge">成果</span>
           </div>
           
           <div className="space-y-4">
             <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 p-4">
-              <p className="text-white/90 leading-relaxed">
+              <p className="text-white/90 text-base leading-relaxed">
                 我们对 InterFuzz 进行了系统评估，结果显示其在发现编译器优化缺陷方面
                 <strong className="text-emerald-300">显著优于现有方法</strong>。
               </p>
