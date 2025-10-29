@@ -400,7 +400,7 @@ export default function Demo() {
     <div className="space-y-3">
       {/* 页面标题 */}
       <div className="mb-8">
-  <h1 className="text-5xl font-bold text-white mb-2">工具使用</h1>
+  <h1 className="text-4xl font-bold text-white mb-2">工具使用</h1>
         <p className="text-white/60 text-base">InterFuzz 测试用例生成与可视化演示</p>
       </div>
 
