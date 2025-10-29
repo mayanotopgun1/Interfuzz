@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import GraphViewer, { GraphViewerHandle } from './GraphViewer'
+import GraphLegend from './GraphLegend'
 
 interface GraphPanelProps {
   dataUrl?: string | null
@@ -83,6 +84,7 @@ export default function GraphPanel({ dataUrl, labelDistance, height = 420, title
             <div className="text-white/50 text-sm">尚未加载 JSON 数据</div>
           </div>
         )}
+        {dataUrl && <GraphLegend />}
       </div>
 
       {fullscreen && (

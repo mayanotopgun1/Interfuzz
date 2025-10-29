@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import GraphPanel from '../components/GraphPanel'
 import { Trash2, PlayCircle, CheckCircle2, Loader2, Info, FileCode, ChevronRight, Download, BarChart2, Activity, ArrowRightCircle, Sparkles } from 'lucide-react'
-import { PIPELINE_CORE_STEPS, PIPELINE_CONNECTORS, PIPELINE_PROGRESS_SEQUENCE, PIPELINE_DESCRIPTION, PIPELINE_NOTE, MUTATED_CODE_HEADER, MUTATION_EXPLANATION, MUTATED_CODE_SNIPPET, HEADER_TITLE, HEADER_SUBTITLE } from '../data/terminology'
+import { PIPELINE_CORE_STEPS, PIPELINE_CONNECTORS, PIPELINE_PROGRESS_SEQUENCE, PIPELINE_DESCRIPTION, PIPELINE_NOTE, HEADER_TITLE, HEADER_SUBTITLE } from '../data/terminology'
 import PipelineFlow from '../components/PipelineFlow'
 import CodePreview from '../components/CodePreview'
 
@@ -71,6 +71,12 @@ export default function Demo() {
   const [compareJustActivated, setCompareJustActivated] = useState(false)
   // 图区域临时脉冲高亮 (点击“可视化变异过程”时触发)
   const [graphPulse, setGraphPulse] = useState(false)
+
+  // 固定使用真实示例图数据（input / output）
+  const SEED_GRAPH_PATH = '/graphs/input.json'
+  const MUT_GRAPH_PATH = '/graphs/output.json'
+  // 测试程序 output.java 下载 URL
+  const [outputJavaBlobUrl, setOutputJavaBlobUrl] = useState<string | null>(null)
 
   // 轻量主题检测（通过根元素是否含有 theme-light class）
   function useIsLightTheme(): boolean {
@@ -242,12 +248,9 @@ export default function Demo() {
   // 模拟步骤执行
   async function startAutoDemo() {
     if (analysisRunning) return
-    const hasManual = false
-    const seedName = selectedFile?.name || ''
-    if (!selectedFile) {
-      setError('请先选择一个 Java Seed 文件')
-      return
-    }
+  const hasManual = false
+  // 使用占位 Seed 名称（可为空时回退为 ExampleSeed.java）
+  const seedName = selectedFile?.name || 'ExampleSeed.java'
     // reset
     setAnalysisDone(false)
     setCurrentStep(-1)
@@ -270,15 +273,13 @@ export default function Demo() {
       setCurrentStep(i)
       // 针对具体阶段做出可见效果
       if (progressSteps[i].includes('初始 HPG')) {
-        setLeftDataUrl('/graphs/seed.json')
-        const seedFileBase = seedName || 'Seed.java'
-        setLeftSource(seedFileBase)
+        setLeftDataUrl(SEED_GRAPH_PATH)
+        setLeftSource(`${seedName} · input.json`)
       }
       // 结构分析阶段：只生成统计，不加载图（假设步骤名包含“结构分析”）
       if (progressSteps[i].includes('结构分析')) {
-        // 预加载种子图数据用于统计展示
         try {
-          const resp = await fetch('/graphs/seed.json')
+          const resp = await fetch(SEED_GRAPH_PATH)
           if (resp.ok) {
             const data: GraphData = await resp.json()
             const summary = summarizeGraph(data)
@@ -287,13 +288,23 @@ export default function Demo() {
         } catch {}
       }
       if (progressSteps[i].includes('变异后 HPG')) {
-        setRightDataUrl('/graphs/mut.json')
-        const seedFileBase = seedName || 'Seed.java'
-        setRightSource(`${seedFileBase.replace(/\.java$/,'')}-after.json`)
+        setRightDataUrl(MUT_GRAPH_PATH)
+        setRightSource(`${seedName.replace(/\.java$/, '')}-after · output.json`)
+        // 仍加载图用于差异统计，不再保存 JSON 文本
+        try { await fetch(MUT_GRAPH_PATH) } catch {}
       }
       if (progressSteps[i].includes('测试程序生成')) {
-        const seedBase = (seedName || 'Seed.java')
-        setMutatedCode(MUTATED_CODE_HEADER + MUTATION_EXPLANATION + MUTATED_CODE_SNIPPET(seedBase))
+        try {
+          const resp = await fetch('/graphs/output.java')
+          if (resp.ok) {
+            const txt = await resp.text()
+            setMutatedCode(txt)
+            if (outputJavaBlobUrl) URL.revokeObjectURL(outputJavaBlobUrl)
+            const blob = new Blob([txt], { type: 'text/x-java-source;charset=utf-8' })
+            const url = URL.createObjectURL(blob)
+            setOutputJavaBlobUrl(url)
+          }
+        } catch {}
       }
       // 不同阶段不同停顿模拟耗时
       await delay( i === 0 ? 800 : i === progressSteps.length - 1 ? 600 : 900 )
@@ -341,29 +352,25 @@ export default function Demo() {
     reader.readAsText(file)
   }
 
-  // 预选 Seed 集（用于演示，不依赖后端）
-  const sampleSeeds: Array<{ name: string; content: string }> = [
-    {
-      name: 'SeedSample_A.java',
-      content: `// Preselected Seed · A\ninterface I1 { default int v(){ return 1; } }\nclass C_A implements I1 { static int s = 0; static { s = s + 1; }\n  public int m1(){ return 3; }\n}\npublic class SeedSample_A { public static void main(String[] args){ System.out.println(new C_A().v() + C_A.s); } }`
-    },
-    {
-      name: 'SeedSample_B.java',
-      content: `// Preselected Seed · B\ninterface I2 { default int v(){ return 2; } }\nclass C_B implements I2 { static int s = 1; static { s = s + 2; }\n  public int m1(){ return 5; }\n  public int m2(){ return 7; }\n}\npublic class SeedSample_B { public static void main(String[] args){ System.out.println(new C_B().v() + C_B.s); } }`
-    },
-    {
-      name: 'SeedSample_C.java',
-      content: `// Preselected Seed · C\ninterface I3 { default int v(){ return 3; } }\nclass C_C implements I3 { static int s = 2; static { s = s + 1; }\n  public int m1(){ return 1; }\n}\npublic class SeedSample_C { public static void main(String[] args){ System.out.println(new C_C().v() + C_C.s); } }`
-    }
-  ]
-
-  function useSampleSeed(seed: { name: string; content: string }) {
-    const file = new File([seed.content], seed.name, { type: 'text/x-java-source;charset=utf-8' })
+  // 单一真实预选 Seed 内容（input.java）
+  const [inputSeedContent, setInputSeedContent] = useState<string>('')
+  useEffect(() => {
+    let cancel = false
+    ;(async ()=>{
+      try {
+        const resp = await fetch('/graphs/input.java')
+        if (!resp.ok) return
+        const txt = await resp.text()
+        if (!cancel) setInputSeedContent(txt)
+      } catch {}
+    })()
+    return () => { cancel = true }
+  }, [])
+  function useInputSeed() {
+    if (!inputSeedContent) return
+    const file = new File([inputSeedContent], 'input.java', { type: 'text/x-java-source;charset=utf-8' })
     setSelectedFile(file)
-    setSelectedFileContent(seed.content)
-    setManualJavaText('')
-    setManualOpen(false)
-    // 清理结果区，等待用户点击“开始分析”
+    setSelectedFileContent(inputSeedContent)
     setAnalysisDone(false)
     setCurrentStep(-1)
     setMutatedCode('')
@@ -378,7 +385,7 @@ export default function Demo() {
     setCompareJustActivated(false)
     setError(null)
     setShowSeedPicker(false)
-    setTimeout(() => { previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, 50)
+    setTimeout(() => { previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, 60)
   }
 
   // 原手动 JSON 模式逻辑已移除
@@ -424,16 +431,20 @@ export default function Demo() {
               <h3 className="font-semibold text-white flex items-center gap-2"><PlayCircle size={18} className="text-sky-400"/>分析—变异流水线</h3>
               <button
                 className="btn-primary disabled:opacity-50"
-                disabled={analysisRunning || !selectedFile}
+                disabled={analysisRunning}
                 onClick={startAutoDemo}
                 aria-label="开始分析"
               >{analysisRunning ? (<><Loader2 size={16} className="animate-spin"/> 运行中...</>) : '开始分析'}</button>
+            </div>
+            {/* 固定真实图数据集提示 */}
+            <div className="text-[11px] text-white/50 flex items-center gap-2">
+              <span className="px-2 py-1 rounded bg-white/5 border border-white/10">图数据集: 真实案例 (input.json → output.json)</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap text-xs mb-1 relative">
               <label className="text-white/60">Seed：</label>
               <button
                 type="button"
-                onClick={() => setShowSeedPicker((v) => !v)}
+                onClick={() => setShowSeedPicker(v=>!v)}
                 className={`seed-btn`}
                 aria-label="选择预选 Seed"
                 aria-expanded={showSeedPicker}
@@ -445,8 +456,25 @@ export default function Demo() {
                 </span>
               </button>
               <span className="seed-caption">
-                <span className="seed-caption__source">预选 Seed 集</span>
+                <span className="seed-caption__source">预选 Seed · input.java</span>
               </span>
+              {showSeedPicker && (
+                <div className={`absolute z-20 top-full left-14 mt-2 w-[520px] rounded-xl border p-3 shadow-lg backdrop-blur-md transition ${isLight ? 'border-slate-200 bg-white/95' : 'border-white/10 bg-[rgba(20,24,36,0.9)]'} `}>
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className={`rounded-lg border p-2 transition group ${isLight ? 'border-slate-200 bg-slate-50 hover:bg-slate-100' : 'border-white/10 bg-white/5 hover:bg-white/10'}` }>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`font-medium truncate ${isLight ? 'text-slate-700 group-hover:text-slate-800' : 'text-white/80 group-hover:text-white'}`}>input.java</div>
+                        <button
+                          className={`text-[11px] px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'btn-ghost border-white/15 text-white/60 hover:text-white'}`}
+                          disabled={!inputSeedContent}
+                          onClick={useInputSeed}
+                        >选用</button>
+                      </div>
+                      <pre className={`text-[10px] max-h-32 overflow-auto whitespace-pre-wrap leading-snug ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{inputSeedContent ? inputSeedContent.slice(0, 580) + (inputSeedContent.length > 580 ? '…' : '') : '加载中...'}</pre>
+                    </div>
+                  </div>
+                </div>
+              )}
               {selectedFile && (
                 <>
                   <div className="h-4 w-px bg-white/10 mx-1" />
@@ -459,37 +487,14 @@ export default function Demo() {
                       setManualOpen(false)
                       setLeftDataUrl(null); setRightDataUrl(null); setLeftSource(''); setRightSource(''); setMutatedCode(''); setAnalysisDone(false); setCurrentStep(-1)
                       setSeedGraphSummary(null); setMutGraphSummary(null); setGraphDiff(null); setCompareMode(false); setCompareJustActivated(false)
+                      if (outputJavaBlobUrl) { URL.revokeObjectURL(outputJavaBlobUrl); setOutputJavaBlobUrl(null) }
                     }}>移除文件</button>
                   <button
                     className="btn text-xs px-2 py-1"
                     disabled={analysisRunning}
-                    onClick={() => { setAnalysisDone(false); setCurrentStep(-1); setMutatedCode(''); startAutoDemo() }}
+                    onClick={() => { setAnalysisDone(false); setCurrentStep(-1); setMutatedCode(''); if (outputJavaBlobUrl) { URL.revokeObjectURL(outputJavaBlobUrl); setOutputJavaBlobUrl(null) } startAutoDemo() }}
                   >重新运行</button>
                 </>
-              )}
-              {showSeedPicker && (
-                <div className={`absolute z-20 top-full left-14 mt-2 w-[520px] rounded-xl border p-3 shadow-lg backdrop-blur-md transition ${isLight ? 'border-slate-200 bg-white/95' : 'border-white/10 bg-[rgba(20,24,36,0.9)]'} `}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {sampleSeeds.map((s) => (
-                      <div
-                        key={s.name}
-                        className={`rounded-lg border p-2 transition group ${isLight ? 'border-slate-200 bg-slate-50 hover:bg-slate-100' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <div
-                            className={`font-medium truncate ${isLight ? 'text-slate-700 group-hover:text-slate-800' : 'text-white/80 group-hover:text-white'}`}
-                            title={s.name}
-                          >{s.name}</div>
-                          <button
-                            className={`text-[11px] px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'btn-ghost border-white/15 text-white/60 hover:text-white'}`}
-                            onClick={() => useSampleSeed(s)}
-                          >选用</button>
-                        </div>
-                        <pre className={`text-[10px] max-h-24 overflow-auto whitespace-pre-wrap leading-snug ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{s.content.slice(0, 240)}{s.content.length > 240 ? '…' : ''}</pre>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               )}
             </div>
             <p className="text-xs text-white/50">导入 Seed 后系统依次执行：Seed 导入 → 结构分析 → 初始 HPG → 变异执行 → 变异后 HPG → 测试程序。</p>
@@ -512,16 +517,28 @@ export default function Demo() {
             {/* 输出预览 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-white/70 text-xs font-semibold tracking-wide">输出测试程序</h4>
-                {mutatedCode && <span className="text-[10px] text-white/40">Generated</span>}
+                <h4 className="text-white/70 text-xs font-semibold tracking-wide">输出结果</h4>
+                {mutatedCode && <span className="text-[10px] text-white/40">已生成</span>}
               </div>
-              {selectedFile && mutatedCode ? (
-                <CodePreview
-                  code={mutatedCode}
-                  language="java"
-                  filename={`${(selectedFile?.name?.replace(/\.java$/, '') || 'Seed')}Test.java`}
-                  maxHeight={260}
-                />
+              {mutatedCode ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-white/50">测试程序 (output.java)</span>
+                    {outputJavaBlobUrl && (
+                      <a
+                        href={outputJavaBlobUrl}
+                        download="output.java"
+                        className="text-cyan-300 underline hover:text-cyan-200 text-[11px]"
+                      >下载 output.java</a>
+                    )}
+                  </div>
+                  <CodePreview
+                    code={mutatedCode}
+                    language="java"
+                    filename={`output.java`}
+                    maxHeight={260}
+                  />
+                </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-xs text-white/45 min-h-[140px] flex items-center justify-center">
                   等待流程生成测试程序…
@@ -585,20 +602,7 @@ export default function Demo() {
                   </div>
                   <div className="space-y-2">
                     <h5 className={`text-[11px] font-medium flex items-center gap-1 ${tone.subHeading}`}><ArrowRightCircle size={12} className="text-emerald-500"/>差异摘要</h5>
-                    <div className="flex flex-wrap gap-1">
-                      {graphDiff?.addedNodes.map(an => (
-                        <span key={an.id} className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/30 text-[10px] text-emerald-300">+节点 {an.id}({an.kind})</span>
-                      ))}
-                      {graphDiff?.addedMethodRows.map(am => (
-                        <span key={am.nodeId} className="px-2 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-400/30 text-[10px] text-cyan-300">+方法 {am.nodeId} ×{am.count}</span>
-                      ))}
-                      {graphDiff?.addedEdges.map(ae => (
-                        <span key={ae.id} className="px-2 py-0.5 rounded-md bg-purple-500/15 border border-purple-400/30 text-[10px] text-purple-300">+边 {ae.kind}</span>
-                      ))}
-                      {graphDiff && graphDiff.addedNodes.length===0 && graphDiff.addedEdges.length===0 && graphDiff.addedMethodRows.length===0 && (
-                        <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-[10px] text-white/50">暂无新增结构</span>
-                      )}
-                    </div>
+                    <DiffSummaryAggregated graphDiff={graphDiff} tone={tone} />
                     <div className={`mt-2 text-[10px] italic flex items-center gap-1 ${tone.caption}`}><Sparkles size={12} className="text-yellow-500"/>基于行(row)统计：方法/字段作为行计数，节点按首行类型分类。</div>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {graphSuggestions.map((sg,i)=>(
@@ -965,6 +969,87 @@ function DiffBar({ original, added }: DiffBarProps) {
       <div className="absolute inset-0 flex items-center justify-center text-[9px] text-white/70">
         +{added} / {original}
       </div>
+    </div>
+  )
+}
+
+// 聚合差异标签组件，避免主界面过长
+// 引用上方 GraphDiff 接口类型
+type GraphDiffLocal = {
+  nodeKindDelta: Record<string, number>
+  edgeKindDelta: Record<string, number>
+  addedNodes: Array<{ id: string; kind: string }>
+  addedMethodRows: Array<{ nodeId: string; count: number }>
+  addedEdges: Array<{ id: string; kind: string }>
+}
+interface DiffSummaryAggregatedProps { graphDiff: GraphDiffLocal | null; tone: any }
+function DiffSummaryAggregated({ graphDiff, tone }: DiffSummaryAggregatedProps) {
+  const [open, setOpen] = useState(false)
+  if (!graphDiff) {
+    return <div className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white/50 inline-block">暂无新增结构</div>
+  }
+  const nodeKindsAgg: Record<string, number> = {}
+  graphDiff.addedNodes.forEach((n: { id: string; kind: string }) => { nodeKindsAgg[n.kind] = (nodeKindsAgg[n.kind] || 0) + 1 })
+  const totalAddedMethods = graphDiff.addedMethodRows.reduce((a: number,b: { nodeId: string; count: number })=>a + b.count,0)
+  const edgeKindsAgg: Record<string, number> = {}
+  graphDiff.addedEdges.forEach((e: { id: string; kind: string }) => { edgeKindsAgg[e.kind] = (edgeKindsAgg[e.kind] || 0) + 1 })
+  const badges: Array<{ label: string; value: number; color: string }> = []
+  Object.entries(nodeKindsAgg).forEach(([k,v]) => badges.push({ label: `节点:${k}`, value: v, color: 'emerald' }))
+  if (totalAddedMethods > 0) badges.push({ label: '方法行', value: totalAddedMethods, color: 'cyan' })
+  Object.entries(edgeKindsAgg).forEach(([k,v]) => badges.push({ label: `边:${k}`, value: v, color: 'purple' }))
+  if (badges.length === 0) return <div className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-white/50 inline-block">暂无新增结构</div>
+
+  const colorClass = (c: string) => {
+    switch (c) {
+      case 'emerald': return 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
+      case 'cyan': return 'bg-cyan-500/15 border-cyan-400/30 text-cyan-300'
+      case 'purple': return 'bg-purple-500/15 border-purple-400/30 text-purple-300'
+      default: return 'bg-white/10 border-white/15 text-white/60'
+    }
+  }
+  return (
+    <div className="flex flex-wrap gap-1 items-center">
+      {badges.slice(0,6).map((b,i)=>(
+        <span key={i} className={`px-2 py-0.5 rounded-md border text-[10px] ${colorClass(b.color)}`}>{b.label} +{b.value}</span>
+      ))}
+      {badges.length > 6 && (
+        <button type="button" onClick={()=>setOpen(true)} className="px-2 py-0.5 rounded-md border border-white/15 bg-white/10 text-[10px] text-white/65 hover:text-white/80">+更多 {badges.length - 6}</button>
+      )}
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={()=>setOpen(false)} />
+          <div className="relative w-full max-w-lg rounded-xl border border-white/15 bg-[#121a26] p-4 shadow-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-white/80">新增结构详情</h4>
+              <button type="button" onClick={()=>setOpen(false)} className="text-xs px-2 py-1 rounded-md bg-white/10 text-white/70 hover:text-white">关闭</button>
+            </div>
+            <div className="text-[10px] text-white/50">按种类聚合显示所有新增节点、方法行和边。原始 ID 列表用于深入分析。</div>
+            <div className="max-h-[260px] overflow-auto space-y-2 pr-1">
+              <div>
+                <div className="text-[11px] font-medium text-emerald-300 mb-1">新增节点列表</div>
+                <div className="flex flex-wrap gap-1">
+                  {graphDiff.addedNodes.map((n: { id: string; kind: string }) => <span key={n.id} className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-[10px] border border-emerald-400/30 text-emerald-200">{n.id}({n.kind})</span>)}
+                  {graphDiff.addedNodes.length===0 && <span className="text-[10px] text-white/40">无</span>}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-medium text-cyan-300 mb-1">新增方法行 (按节点)</div>
+                <div className="flex flex-wrap gap-1">
+                  {graphDiff.addedMethodRows.map((m: { nodeId: string; count: number }) => <span key={m.nodeId} className="px-1.5 py-0.5 rounded bg-cyan-500/15 text-[10px] border border-cyan-400/30 text-cyan-200">{m.nodeId} ×{m.count}</span>)}
+                  {graphDiff.addedMethodRows.length===0 && <span className="text-[10px] text-white/40">无</span>}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-medium text-purple-300 mb-1">新增边列表</div>
+                <div className="flex flex-wrap gap-1">
+                  {graphDiff.addedEdges.map((e: { id: string; kind: string }) => <span key={e.id} className="px-1.5 py-0.5 rounded bg-purple-500/15 text-[10px] border border-purple-400/30 text-purple-200">{e.kind}</span>)}
+                  {graphDiff.addedEdges.length===0 && <span className="text-[10px] text-white/40">无</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

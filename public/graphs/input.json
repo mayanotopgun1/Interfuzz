@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "title": "Code Structure Diagram",
+    "layout": {
+      "mode": "grid",
+      "colGap": 170,
+      "rowGap": 160,
+      "c0ExtendLong": 130,
+      "c0ExtendShort": 100,
+      "labelDistanceFromSource": 80
+    },
+    "nodeDefaults": { "width": 180, "rowHeight": 30, "padding": 8 }
+  },
+  "nodes": [
+    {
+      "id": "class_0",
+      "layer": 0,
+      "order": 0,
+      "rows": [
+        {
+          "type": "class",
+          "text": "Class Test9257"
+        },
+        {
+          "type": "method",
+          "text": "void vMeth(float)"
+        },
+        {
+          "type": "method",
+          "text": "int iMeth1(int, boolean, int)"
+        },
+        {
+          "type": "method",
+          "text": "int iMeth(float)"
+        },
+        {
+          "type": "method",
+          "text": "void vSmallMeth(int, int)"
+        },
+        {
+          "type": "method",
+          "text": "void mainTest(String[])"
+        },
+        {
+          "type": "method",
+          "text": "void main(String[])"
+        },
+        {
+          "type": "field",
+          "text": "int N"
+        },
+        {
+          "type": "field",
+          "text": "long instanceCount"
+        },
+        {
+          "type": "field",
+          "text": "byte byFld"
+        },
+        {
+          "type": "field",
+          "text": "double dFld"
+        },
+        {
+          "type": "field",
+          "text": "int iFld"
+        },
+        {
+          "type": "field",
+          "text": "int iFld1"
+        },
+        {
+          "type": "field",
+          "text": "long lArrFld"
+        },
+        {
+          "type": "field",
+          "text": "int iArrFld"
+        },
+        {
+          "type": "field",
+          "text": "long vMeth_check_sum"
+        },
+        {
+          "type": "field",
+          "text": "long vSmallMeth_check_sum"
+        },
+        {
+          "type": "field",
+          "text": "long iMeth_check_sum"
+        },
+        {
+          "type": "field",
+          "text": "long iMeth1_check_sum"
+        }
+      ]
+    }
+  ],
+  "edges": []
+}

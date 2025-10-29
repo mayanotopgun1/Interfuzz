@@ -72,81 +72,102 @@
   "edges": [
     {
       "id": "e_c0_c1_new",
+      "kind": "reference",
       "source": "c0",
       "target": "c1",
       "style": { "line": "solid", "marker": "arrow" },
-      "label": "Reference\nObject Instantiation",
-      "attach": { "sourceRow": 1, "targetRow": 1 }
+      "sourceRow": 1,
+      "targetRow": 1,
+      "label": "Reference\nObject Instantiation"
     },
     {
       "id": "e_c0_c2_new",
+      "kind": "reference",
       "source": "c0",
       "target": "c2",
       "style": { "line": "solid", "marker": "arrow" },
-      "label": "Reference\nObject Instantiation",
-      "attach": { "sourceRow": 1, "targetRow": 1 }
+      "sourceRow": 1,
+      "targetRow": 1,
+      "label": "Reference\nObject Instantiation"
     },
     {
       "id": "e_c0_c1_call",
+      "kind": "reference",
       "source": "c0",
       "target": "c1",
-      "style": { "line": "dotted", "marker": "arrow" },
-      "label": "Reference\nMethod Invocation",
-      "attach": { "sourceRow": 2, "targetRow": 2 }
+      
+      "sourceRow": 2,
+      "targetRow": 2,
+      "label": "Reference\nMethod Invocation"
     },
     {
       "id": "e_c0_c2_call",
+      "kind": "reference",
       "source": "c0",
       "target": "c2",
-      "style": { "line": "dotted", "marker": "arrow" },
-      "label": "Reference\nMethod Invocation",
-      "attach": { "sourceRow": 2, "targetRow": 2 }
+      
+      "sourceRow": 2,
+      "targetRow": 2,
+      "label": "Reference\nMethod Invocation"
     },
     {
       "id": "e_c1_i1_impl",
+      "kind": "interface-impl",
       "source": "c1",
       "target": "i1",
-      "style": { "line": "dashed", "marker": "arrow" },
-      "label": "Interface Implement",
-      "attach": { "sourceRow": 1, "targetRow": 1 }
+      
+      "sourceRow": 1,
+      "targetRow": 1,
+      "label": "Interface Implement"
     },
     {
       "id": "e_c2_i2_impl",
+      "kind": "interface-impl",
       "source": "c2",
       "target": "i2",
-      "style": { "line": "dashed", "marker": "arrow" },
-      "label": "Interface Implement",
-      "attach": { "sourceRow": 1, "targetRow": 1 }
+      
+      "sourceRow": 1,
+      "targetRow": 1,
+      "label": "Interface Implement"
     },
     {
       "id": "e_c3_c1_impl",
+      "kind": "interface-impl",
       "source": "c3",
       "target": "c1",
-      "style": { "line": "dashed", "marker": "arrow" },
-      "label": "Interface Implement",
-      "attach": { "sourceRow": 1, "targetRow": 1 }
+      
+      "sourceRow": 1,
+      "targetRow": 1,
+      "label": "Interface Implement"
     },
     {
       "id": "e_c1_c3_impl",
+      "kind": "interface-impl",
       "source": "c1",
       "target": "c3",
-      "style": { "line": "dashed", "marker": "arrow" },
-      "label": "Interface Implement",
-      "attach": { "sourceRow": 1, "targetRow": 3 }
+      
+      "sourceRow": 1,
+      "targetRow": 3,
+      "label": "Interface Implement"
     },
     {
       "id": "e_row_based",
+      "kind": "interface-impl",
       "source": "c3",
       "target": "c2",
-      "style": { "line": "dashed", "marker": "arrow" },
-      "label": "Interface Implement",
-      "attach": { "sourceRow": 1, "targetRow": 2 }
+      
+      "sourceRow": 1,
+      "targetRow": 2,
+      "label": "Interface Implement"
     },
     {
       "id": "e_i2_i1_ext",
+      "kind": "inheritance",
       "source": "i2",
       "target": "i1",
-      "style": { "line": "solid", "marker": "arrow" },
+      
+      "sourceRow": 1,
+      "targetRow": 1,
       "label": "Inheritance",
       "targetSide": "east"
     }
