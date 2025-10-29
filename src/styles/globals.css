@@ -107,6 +107,43 @@ body {
   animation: shimmer 2s infinite;
 }
 
+/* Reveal scroll-in animation */
+.reveal-pre { opacity:0; transform: translateY(18px) scale(.985); transition: opacity .55s cubic-bezier(.17,.67,.35,1), transform .55s cubic-bezier(.17,.67,.35,1); }
+.reveal-in { opacity:1; transform: translateY(0) scale(1); }
+
+/* Intro 专用微动画 */
+@keyframes fadeInQuick { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+@keyframes titleIn { 0% { opacity:0; transform:translateY(12px) scale(.98); } 60% { opacity:1; transform:translateY(0) scale(1); } 100% { opacity:1; } }
+@keyframes cardIn { 0% { opacity:0; transform:translateY(10px); } 100% { opacity:1; transform:translateY(0); } }
+.animate-fade-in { animation: fadeInQuick .5s cubic-bezier(.17,.67,.35,1) forwards; }
+.animate-title-in { animation: titleIn .75s cubic-bezier(.21,.74,.26,1) forwards; }
+.animate-card-in { animation: cardIn .55s ease-out forwards; }
+
+/* 醒目箭头：水平推动 + 呼吸亮度 */
+@keyframes arrowNudgeMove { 0% { transform: translateX(0); } 50% { transform: translateX(8px); } 100% { transform: translateX(0); } }
+@keyframes arrowNudgeGlow { 0% { opacity:.85; filter: drop-shadow(0 0 4px rgba(0,200,255,0.4)); } 50% { opacity:1; filter: drop-shadow(0 0 10px rgba(0,220,255,0.9)); } 100% { opacity:.9; filter: drop-shadow(0 0 6px rgba(0,210,255,0.55)); } }
+.animate-arrow-nudge { animation: arrowNudgeMove 1.7s ease-in-out infinite, arrowNudgeGlow 2.4s ease-in-out infinite; }
+
+/* 指向按钮的箭头：轻微上下浮动 + 亮度呼吸 */
+@keyframes arrowPointMove { 0% { transform: translateY(0); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
+@keyframes arrowPointGlow { 0% { opacity:.85; filter: drop-shadow(0 0 4px rgba(0,200,255,0.35)); } 50% { opacity:1; filter: drop-shadow(0 0 10px rgba(0,220,255,0.85)); } 100% { opacity:.92; filter: drop-shadow(0 0 6px rgba(0,210,255,0.55)); } }
+.animate-arrow-point { animation: arrowPointMove 1.9s ease-in-out infinite, arrowPointGlow 2.6s ease-in-out infinite; }
+
+/* stagger: 通过子元素延迟分布 */
+.animate-stagger > * { opacity:0; transform:translateY(6px); animation: fadeInQuick .55s ease-out forwards; }
+.animate-stagger > *:nth-child(1) { animation-delay:.08s; }
+.animate-stagger > *:nth-child(2) { animation-delay:.16s; }
+.animate-stagger > *:nth-child(3) { animation-delay:.24s; }
+.animate-stagger > *:nth-child(4) { animation-delay:.32s; }
+.animate-stagger > *:nth-child(5) { animation-delay:.40s; }
+
+/* Intro section 密度微调: 控制内部卡片 hover 背景 & 透明度 */
+.intro-cards-prim .group:hover { background-color: rgba(255,255,255,0.04); }
+.intro-cards-secondary .group:hover { background-color: rgba(255,255,255,0.05); }
+
+/* Title 初次渲染后阻止重复动画 (可选优化，利用 data- 标记) */
+.intro-title[data-animated='true'] { animation: none !important; }
+
 /* Fancy generate-seed button */
 .seed-btn {
   position: relative;
@@ -325,4 +362,21 @@ body {
 }
 .hljs-light .hljs-deletion {
   background-color: #ffebe9;
+}
+
+/* Seed 预选面板过渡动画 */
+.seed-panel-transition {
+  transition: max-height 0.5s cubic-bezier(.4,.1,.2,1), opacity 0.35s ease, transform 0.5s cubic-bezier(.4,.1,.2,1);
+  will-change: max-height, opacity, transform;
+}
+.seed-panel-closed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px) scale(.98);
+}
+.seed-panel-open {
+  max-height: 420px; /* 足够容纳内容 */
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }

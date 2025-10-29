@@ -53,7 +53,7 @@ export default function Home() {
                 <PlayCircle className="opacity-90" size={22} />
               </div>
               <h3 className="text-xl font-semibold mb-1">工具使用 · Tool</h3>
-              <p className="text-white/70 text-base">粘贴/示例 JSON 即刻成图，双图对照与标签距离调节一键掌控。</p>
+              <p className="text-white/70 text-base">使用 InterFuzz 工具生成具有复杂类间结构的测试种子。</p>
               <div className="mt-4 inline-flex items-center gap-1 text-white/80 group-hover:text-white">
                 开始体验 <ArrowRight size={16} />
               </div>

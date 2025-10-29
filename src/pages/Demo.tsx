@@ -4,6 +4,35 @@ import { Trash2, PlayCircle, CheckCircle2, Loader2, Info, FileCode, ChevronRight
 import { PIPELINE_CORE_STEPS, PIPELINE_CONNECTORS, PIPELINE_PROGRESS_SEQUENCE, PIPELINE_DESCRIPTION, PIPELINE_NOTE, HEADER_TITLE, HEADER_SUBTITLE } from '../data/terminology'
 import PipelineFlow from '../components/PipelineFlow'
 import CodePreview from '../components/CodePreview'
+import FeatureIntro from '../components/FeatureIntro' // 页面首部平台功能总览
+import InteractiveNav, { Mode } from '../components/InteractiveNav'
+// 轻量滚动显隐：本页内嵌，避免外部导出冲突
+import type { MutableRefObject } from 'react'
+
+function useLocalReveal(): { ref: MutableRefObject<HTMLDivElement | null>; visible: boolean } {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(ent => {
+        if (ent.isIntersecting) {
+          setVisible(true)
+          io.disconnect()
+        }
+      })
+    }, { threshold: 0.12, rootMargin: '0px 0px -5% 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return { ref, visible }
+}
+
+function FadeIn({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const { ref, visible } = useLocalReveal()
+  return <div ref={ref} className={`${className} ${visible ? 'reveal-in' : 'reveal-pre'}`}>{children}</div>
+}
 
 export default function Demo() {
   const [leftDataUrl, setLeftDataUrl] = useState<string | null>(null)
@@ -394,19 +423,28 @@ export default function Demo() {
     setCompareMode(false)
     setCompareJustActivated(false)
     setError(null)
+    setShowSeedPicker(false) // 选用后自动收起预选框
   }
   
+  // 模式切换：overview / single / batch
+  const [mode, setMode] = useState<Mode>('overview')
+
   return (
-    <div className="space-y-3">
-      {/* 页面标题 */}
-      <div className="mb-8">
-  <h1 className="text-5xl font-bold text-white mb-2">工具使用</h1>
-        <p className="text-white/60 text-base">InterFuzz 测试用例生成与可视化演示</p>
-      </div>
+    <div className="space-y-6">
+  <InteractiveNav activeMode={mode} onModeChange={setMode} />
+      {/* 平台功能总览介绍：仅在 overview 模式显示 */}
+      {mode === 'overview' && (
+        <FadeIn>
+          <FeatureIntro onNavigateMode={(m)=> setMode(m)} />
+        </FadeIn>
+      )}
+      {/* 页面标题：区分单种子流水线 / 多种子批量生成；移除统一“工具使用”及演示文案 */}
+      {/* 已移除单种子与批量模式顶部大标题，根据导航直接进入模块内容 */}
 
       {/* Header - 已移除详细说明部分 */}
-      {/* 自动流程演示模块 */}
-      <div className="card" id="pipeline-section">
+      {/* 自动流程演示模块：在 batch 模式隐藏 */}
+  {mode !== 'batch' && mode !== 'overview' && (
+  <div className="card" id="pipeline-section">
         {/* 模块醒目头部 */}
   <div className="relative mb-4 overflow-hidden rounded-xl border border-cyan-400/30 bg-gradient-to-r from-cyan-500/25 via-sky-500/20 to-emerald-500/25 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -420,7 +458,7 @@ export default function Demo() {
           </div>
           <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_85%_15%,rgba(255,255,255,0.35),transparent_70%)]" />
         </div>
-        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-8">
           {/* 左：控制 + 预览双栈 */}
           <div className="flex-[1.15] space-y-4" ref={leftColumnRef}>
             <div className="flex items-center justify-between">
@@ -466,23 +504,25 @@ export default function Demo() {
               <span className="seed-caption">
                 <span className="seed-caption__source">预选 Seed · input.java</span>
               </span>
-              {showSeedPicker && (
-                <div className={`absolute z-20 top-full left-14 mt-2 w-[520px] rounded-xl border p-3 shadow-lg backdrop-blur-md transition ${isLight ? 'border-slate-200 bg-white/95' : 'border-white/10 bg-[rgba(20,24,36,0.9)]'} `}>
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className={`rounded-lg border p-2 transition group ${isLight ? 'border-slate-200 bg-slate-50 hover:bg-slate-100' : 'border-white/10 bg-white/5 hover:bg-white/10'}` }>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`font-medium truncate ${isLight ? 'text-slate-700 group-hover:text-slate-800' : 'text-white/80 group-hover:text-white'}`}>input.java</div>
-                        <button
-                          className={`text-sm px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'btn-ghost border-white/15 text-white/60 hover:text-white'}`}
-                          disabled={!inputSeedContent}
-                          onClick={useInputSeed}
-                        >选用</button>
-                      </div>
-                      <pre className={`text-[10px] max-h-32 overflow-auto whitespace-pre-wrap leading-snug ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{inputSeedContent ? inputSeedContent.slice(0, 580) + (inputSeedContent.length > 580 ? '…' : '') : '加载中...'}</pre>
+              <div
+                className={`seed-panel absolute z-20 top-full left-14 w-[520px] rounded-xl border p-3 shadow-lg backdrop-blur-md mt-2 seed-panel-transition ${showSeedPicker ? 'seed-panel-open' : 'seed-panel-closed'} ${isLight ? 'border-slate-200 bg-white/95' : 'border-white/10 bg-[rgba(20,24,36,0.9)]'}`}
+                aria-hidden={!showSeedPicker}
+              >
+                {/* 内层内容保持渲染，提高动画流畅度 */}
+                <div className="grid grid-cols-1 gap-2">
+                  <div className={`rounded-lg border p-2 transition group ${isLight ? 'border-slate-200 bg-slate-50 hover:bg-slate-100' : 'border-white/10 bg-white/5 hover:bg-white/10'}` }>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className={`font-medium truncate ${isLight ? 'text-slate-700 group-hover:text-slate-800' : 'text-white/80 group-hover:text-white'}`}>input.java</div>
+                      <button
+                        className={`text-sm px-2 py-1 rounded-md border transition ${isLight ? 'border-slate-300 bg-white hover:bg-slate-50 text-slate-600' : 'btn-ghost border-white/15 text-white/60 hover:text-white'}`}
+                        disabled={!inputSeedContent}
+                        onClick={useInputSeed}
+                      >选用</button>
                     </div>
+                    <pre className={`text-[10px] max-h-32 overflow-auto whitespace-pre-wrap leading-snug ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{inputSeedContent ? inputSeedContent.slice(0, 580) + (inputSeedContent.length > 580 ? '…' : '') : '加载中...'}</pre>
                   </div>
                 </div>
-              )}
+              </div>
               {selectedFile && (
                 <>
                   <div className="h-4 w-px bg-white/10 mx-1" />
@@ -698,12 +738,14 @@ export default function Demo() {
               )}
             </div>
           </div>
-        </div>
+          </div>
         {/* 去除独立居中进度条，减少重复视觉元素 */}
       </div>
+      )}
       {error && <div className="card text-sm text-rose-400">错误：{error}</div>}
-      {/* Divider */}
-      <div className="card">
+  {/* 图结果模块：在 batch 模式隐藏（已取消折叠功能） */}
+  {mode !== 'batch' && mode !== 'overview' && (
+  <div className="card">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="text-base text-white/70">图结果</div>
@@ -720,24 +762,33 @@ export default function Demo() {
             />
           </div>
         </div>
-      </div>
-      {/* Graphs: 双图固定并排，初始为空 */}
-  <div id="graph-visual-region" className={`grid gap-3 xl:grid-cols-2 ${graphPulse ? 'ring-2 ring-cyan-400/50 rounded-xl animate-pulse' : ''}`}>
-        <GraphPanel
-          dataUrl={effectiveLeftUrl}
-          height={600}
-          title={'初始 HPG'}
-          subtitle={leftSource || undefined}
-        />
-        <GraphPanel
-          dataUrl={effectiveRightUrl}
-          height={600}
-          title="变异后 HPG"
-          subtitle={rightSource || undefined}
-        />
-      </div>
-      {/* 获取 Seed 模块 */}
+  </div>
+      )}
+      {/* Graphs: 双图固定并排，初始为空 / 在 batch 模式隐藏 */}
+  {mode !== 'batch' && mode !== 'overview' && (
+        <FadeIn className="block">
+          <div id="graph-visual-region" className={`grid gap-3 xl:grid-cols-2 ${graphPulse ? 'ring-2 ring-cyan-400/50 rounded-xl animate-pulse' : ''}`}>
+          <GraphPanel
+            dataUrl={effectiveLeftUrl}
+            height={600}
+            title={'初始 HPG'}
+            subtitle={leftSource || undefined}
+          />
+          <GraphPanel
+            dataUrl={effectiveRightUrl}
+            height={600}
+            title="变异后 HPG"
+            subtitle={rightSource || undefined}
+          />
+          </div>
+        </FadeIn>
+      )}
+      {/* 多种子批量生成模块：仅在 batch 模式显示 */}
+  {mode === 'batch' && (
+    <div className="relative">
       <AcquireSeedsSection generateRandomSeed={generateRandomSeed} blobUrls={blobUrls} />
+    </div>
+  )}
     </div>
   )
 }
@@ -1005,14 +1056,14 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
             <Download size={24} />
           </div>
           <div className="flex flex-col">
-            <div className="text-xl md:text-2xl font-semibold tracking-wide text-emerald-200 leading-tight">工具使用</div>
-            <div className="text-xs md:text-sm text-white/65 mt-0.5">批量测试用例生成 · 支持单独/批量ZIP下载</div>
+            <div className="text-xl md:text-2xl font-semibold tracking-wide text-emerald-200 leading-tight">多种子批量生成</div>
+            <div className="text-xs md:text-sm text-white/65 mt-0.5">按配置批量生成测试用例集合 · 支持单例与总包打包</div>
           </div>
         </div>
         <div className="absolute inset-0 opacity-30 pointer-events-none bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.35),transparent_70%)]" />
       </div>
       <div className="flex items-center justify-between mb-3">
-  <h3 className="font-semibold text-white">工具使用 · 测试用例生成</h3>
+  <h3 className="font-semibold text-white">批量生成配置</h3>
         <div className="flex items-center gap-2 text-sm text-white/70">
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">测试用例: <span className="text-white">{count}</span></span>
           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">迭代: <span className="text-white">{iterations}</span></span>
@@ -1097,14 +1148,14 @@ function AcquireSeedsSection({ generateRandomSeed, blobUrls }: AcquireSeedsProps
           </div>
           <div className="text-sm text-white/50 flex items-center gap-2">
             <Activity size={12}/>
-            <span>生成 {count} 个测试用例，每个 {iterations} 次迭代</span>
+            <span>批量生成 {count} 个测试用例，每个 {iterations} 次迭代</span>
           </div>
         </div>
       )}
       {items.length > 0 && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-medium text-white/80">生成的测试用例</h4>
+            <h4 className="text-sm font-medium text-white/80">已生成的测试用例集合</h4>
             <span className="text-sm text-white/50">{items.length} 个测试用例</span>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
